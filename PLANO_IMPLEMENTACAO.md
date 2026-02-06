@@ -55,6 +55,7 @@ todos:
     status: completed
   - id: fase-17-docs
     content: "Fase 17: README completo com guia de extensibilidade + configuracao Cursor + Context7"
+    status: completed
     status: pending
 isProject: false
 ---
@@ -697,7 +698,7 @@ export function registerAllTools(server: McpServer): void {
 
 ---
 
-## Fase 17: README, Documentacao e Configuracao Final
+## Fase 17: README, Documentacao e Configuracao Final (Concluída)
 
 **Objetivo**: Documentar tudo e garantir que o projeto e facil de evoluir.
 
@@ -812,6 +813,8 @@ Ou para uso direto (sem Docker):
 6. **Nota sobre observabilidade**: Registrar no README que logs e configs de K8s NAO sao incluidos por padrao (apenas sob solicitacao explicita)
 
 **Criterio de conclusao**: README completo, projeto configurado no Cursor e funcionando end-to-end.
+
+**Status**: Concluída. README.md completo com: descricao do projeto, requisitos, inicio rapido (Docker e Node.js), testes, tabelas de todos os componentes (7 tools, 8 resources, 6 prompts), guia de uso no agente de IA (como Resources/Tools/Prompts funcionam com exemplos reais + fluxo combinado), configuracao Cursor e Claude Desktop, integracao Context7, estrutura do projeto, guia de extensibilidade com templates para Tool/Resource/Prompt, convencoes e nota de observabilidade. Total: 130 testes passando.
 
 ---
 
