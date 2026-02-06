@@ -22,10 +22,10 @@ todos:
     status: completed
   - id: fase-6-resources-backend
     content: "Fase 6: Resources - Laravel, NestJS, TDD"
-    status: pending
+    status: completed
   - id: fase-7-resources-frontend
     content: "Fase 7: Resources - Vue 3, React 18"
-    status: pending
+    status: completed
   - id: fase-8-tool-arquitetura
     content: "Fase 8: Tool - analyze_architecture"
     status: pending
@@ -432,7 +432,7 @@ export function registerAllTools(server: McpServer): void {
 
 ---
 
-## Fase 6: Resources - Backend (Laravel, NestJS, TDD)
+## Fase 6: Resources - Backend (Laravel, NestJS, TDD) (Concluída)
 
 **Objetivo**: Criar os resources de referencia para tecnologias backend.
 
@@ -460,9 +460,11 @@ export function registerAllTools(server: McpServer): void {
 
 **Criterio de conclusao**: Testes unitarios para os 3 resources passam. Os 3 resources aparecem no Inspector com conteudo completo.
 
+**Status**: Concluída. Criados `src/resources/laravel-conventions.ts`, `src/resources/nestjs-patterns.ts` e `src/resources/tdd-reference.ts`. Registrados em `src/resources/index.ts`. Testes em `tests/resources/backend.test.ts` (10 testes) validam listagem, URIs, conteudo e termos-chave. Total: 31 testes passando.
+
 ---
 
-## Fase 7: Resources - Frontend (Vue 3, React 18)
+## Fase 7: Resources - Frontend (Vue 3, React 18) (Concluída)
 
 **Objetivo**: Criar os resources de referencia para tecnologias frontend.
 
@@ -483,6 +485,8 @@ export function registerAllTools(server: McpServer): void {
    - React.memo, useMemo, useCallback para performance
 
 **Criterio de conclusao**: Testes unitarios para os 2 resources passam. Os 2 resources aparecem no Inspector com conteudo completo.
+
+**Status**: Concluída. Criados `src/resources/vue-patterns.ts` e `src/resources/react-patterns.ts`. Registrados em `src/resources/index.ts`. Testes em `tests/resources/frontend.test.ts` (7 testes) validam listagem, URIs, conteudo e termos-chave. Total: 38 testes passando.
 
 ---
 
