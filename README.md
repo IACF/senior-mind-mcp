@@ -257,10 +257,60 @@ Edite o arquivo de configuracao do Claude Desktop (`claude_desktop_config.json`)
 
 ## Integracao com Context7
 
-O Senior Mind pode ser usado em conjunto com o [Context7 MCP](https://github.com/upstash/context7) para:
+O Senior Mind pode ser usado em conjunto com o [Context7 MCP](https://context7.com) para:
 
-- **Memoria de longo prazo**: Armazene decisoes de arquitetura (ADRs gerados pelo prompt `architecture-decision`) no Context7 para consulta futura
-- **Documentacao de frameworks**: Use o Context7 para buscar documentacao atualizada dos frameworks enquanto o Senior Mind fornece as convencoes e boas praticas
+- **Documentacao atualizada**: O Context7 busca documentacao em tempo real dos frameworks (Laravel, NestJS, Vue, React), enquanto o Senior Mind fornece convencoes e boas praticas
+- **Complementaridade**: O Senior Mind ensina *como* escrever bom codigo; o Context7 fornece a documentacao *atualizada* de cada framework
+
+### Configurando o Context7
+
+**No Cursor** — Adicione ao `.cursor/mcp.json` (junto com o Senior Mind):
+
+```json
+{
+  "mcpServers": {
+    "senior-mind": {
+      "command": "npx",
+      "args": ["tsx", "src/index.ts"],
+      "cwd": "/caminho/para/senior-mind-mcp",
+      "env": { "DEVELOPER_NAME": "SeuNome" }
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}
+```
+
+**No Claude Desktop** — Adicione ao `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "senior-mind": {
+      "command": "npx",
+      "args": ["tsx", "src/index.ts"],
+      "cwd": "/caminho/para/senior-mind-mcp",
+      "env": { "DEVELOPER_NAME": "SeuNome" }
+    },
+    "context7": {
+      "url": "https://mcp.context7.com/mcp"
+    }
+  }
+}
+```
+
+### Como usar os dois juntos
+
+Adicione `use context7` ao seu prompt para que o agente busque documentacao atualizada no Context7, enquanto o Senior Mind aplica as boas praticas:
+
+```
+Crie um endpoint de autenticacao JWT no NestJS. use context7
+
+→ O Context7 busca a documentacao atual do NestJS e JWT
+→ O Senior Mind aplica Clean Architecture, SOLID e convencoes NestJS
+→ O agente combina ambos para gerar codigo idiomatico e bem estruturado
+```
 
 ---
 
