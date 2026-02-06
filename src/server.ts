@@ -1,5 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { config } from "./config.js";
+import { registerAllTools } from "./tools/index.js";
+import { registerAllPrompts } from "./prompts/index.js";
+import { registerAllResources } from "./resources/index.js";
 
 export function createServer(): McpServer {
   const server = new McpServer({
@@ -7,19 +9,9 @@ export function createServer(): McpServer {
     version: "1.0.0",
   });
 
-  server.tool(
-    "ping",
-    "Testa a conexao com o Senior Mind MCP",
-    {},
-    async () => ({
-      content: [
-        {
-          type: "text",
-          text: `pong - Senior Mind MCP ativo! Ola, ${config.developerName}!`,
-        },
-      ],
-    })
-  );
+  registerAllTools(server);
+  registerAllPrompts(server);
+  registerAllResources(server);
 
   return server;
 }

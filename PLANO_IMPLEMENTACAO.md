@@ -16,10 +16,10 @@ todos:
     status: completed
   - id: fase-4-arquitetura-registro
     content: "Fase 4: Sistema de registro automatico de tools/prompts/resources"
-    status: pending
+    status: completed
   - id: fase-5-resources-fundamentos
     content: "Fase 5: Resources - Clean Code, Clean Architecture, Object Calisthenics"
-    status: pending
+    status: completed
   - id: fase-6-resources-backend
     content: "Fase 6: Resources - Laravel, NestJS, TDD"
     status: pending
@@ -344,7 +344,7 @@ export function createServer(): McpServer {
 
 ---
 
-## Fase 4: Sistema de Registro Automatico
+## Fase 4: Sistema de Registro Automatico (Concluída)
 
 **Objetivo**: Criar a infraestrutura que permite adicionar novas tools/prompts/resources de forma modular, sem alterar arquivos centrais.
 
@@ -391,9 +391,11 @@ export function registerAllTools(server: McpServer): void {
 
 **Criterio de conclusao**: Testes passam para o novo sistema de registro. Tool `ping` migrada para o novo padrao e funcionando no Inspector.
 
+**Status**: Concluída. Tool `ping` migrada para `src/tools/ping.ts` com padrao `register(server)`. Criados `src/tools/index.ts` (`registerAllTools`), `src/prompts/index.ts` (`registerAllPrompts`) e `src/resources/index.ts` (`registerAllResources`). `src/server.ts` atualizado para chamar os tres registradores. Testes em `tests/tools/ping.test.ts` (modulo isolado) e `tests/server.test.ts` (registro automatico) — 10 testes passando.
+
 ---
 
-## Fase 5: Resources - Fundamentos (Clean Code, Clean Architecture, Object Calisthenics)
+## Fase 5: Resources - Fundamentos (Clean Code, Clean Architecture, Object Calisthenics) (Concluída)
 
 **Objetivo**: Criar os 3 resources fundamentais que embasam todas as decisoes do senior developer.
 
@@ -425,6 +427,8 @@ export function registerAllTools(server: McpServer): void {
      9. Sem getters/setters
 
 **Criterio de conclusao**: Testes unitarios para os 3 resources passam. Os 3 resources aparecem na aba Resources do Inspector com conteudo completo.
+
+**Status**: Concluída. Criados `src/resources/clean-code.ts`, `src/resources/clean-architecture.ts` e `src/resources/object-calisthenics.ts` com conteudo completo em Markdown. Registrados em `src/resources/index.ts`. Testes em `tests/resources/fundamentals.test.ts` (11 testes) validam listagem, URIs, conteudo nao vazio e termos-chave. Total: 21 testes passando.
 
 ---
 

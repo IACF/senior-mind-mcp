@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../src/server.js";
@@ -18,8 +18,23 @@ describe("MCP Server", () => {
     await client.connect(clientTransport);
   });
 
+  describe("sistema de registro", () => {
+    it("deve registrar tools via registerAllTools", async () => {
+      const { tools } = await client.listTools();
+
+      expect(tools.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("deve expor a tool ping apos registro automatico", async () => {
+      const { tools } = await client.listTools();
+      const toolNames = tools.map((t) => t.name);
+
+      expect(toolNames).toContain("ping");
+    });
+  });
+
   describe("tool ping", () => {
-    it("deve estar listada nas tools disponiveis", async () => {
+    it("deve estar listada nas tools disponiveis com descricao correta", async () => {
       const { tools } = await client.listTools();
       const pingTool = tools.find((t) => t.name === "ping");
 
@@ -43,7 +58,10 @@ describe("MCP Server", () => {
     it("deve incluir o nome do config na resposta", async () => {
       const result = await client.callTool({ name: "ping", arguments: {} });
 
-      const textContent = result.content as Array<{ type: string; text: string }>;
+      const textContent = result.content as Array<{
+        type: string;
+        text: string;
+      }>;
       expect(textContent[0].text).toContain("Ola,");
     });
   });
