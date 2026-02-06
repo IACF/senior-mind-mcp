@@ -1,0 +1,689 @@
+---
+name: Senior Mind MCP
+overview: Criar um servidor MCP (Model Context Protocol) em TypeScript com transporte stdio, containerizado com Docker, que replica a mentalidade de um desenvolvedor senior, expondo Tools, Prompts e Resources para auxiliar em arquitetura, TDD, backend, frontend e planejamento.
+todos:
+  - id: fase-1-projeto
+    content: "Fase 1: Inicializacao do projeto (package.json, tsconfig, .env, .gitignore)"
+    status: pending
+  - id: fase-2-docker
+    content: "Fase 2: Ambiente Docker (Dockerfile, docker-compose com app + MCP Inspector)"
+    status: pending
+  - id: fase-3-servidor
+    content: "Fase 3: Servidor MCP base (McpServer + StdioServerTransport + tool ping)"
+    status: pending
+  - id: fase-4-arquitetura-registro
+    content: "Fase 4: Sistema de registro automatico de tools/prompts/resources"
+    status: pending
+  - id: fase-5-resources-fundamentos
+    content: "Fase 5: Resources - Clean Code, Clean Architecture, Object Calisthenics"
+    status: pending
+  - id: fase-6-resources-backend
+    content: "Fase 6: Resources - Laravel, NestJS, TDD"
+    status: pending
+  - id: fase-7-resources-frontend
+    content: "Fase 7: Resources - Vue 3, React 18"
+    status: pending
+  - id: fase-8-tool-arquitetura
+    content: "Fase 8: Tool - analyze_architecture"
+    status: pending
+  - id: fase-9-tool-review
+    content: "Fase 9: Tool - review_code"
+    status: pending
+  - id: fase-10-tool-refactoring
+    content: "Fase 10: Tool - suggest_refactoring (Object Calisthenics)"
+    status: pending
+  - id: fase-11-tool-tdd
+    content: "Fase 11: Tool - tdd_guide (Red/Green/Refactor com gates)"
+    status: pending
+  - id: fase-12-tool-sql
+    content: "Fase 12: Tool - compare_sql (ORM vs SQL puro)"
+    status: pending
+  - id: fase-13-tool-planning
+    content: "Fase 13: Tool - plan_implementation (questionario + plano faseado)"
+    status: pending
+  - id: fase-14-prompts-arch
+    content: "Fase 14: Prompts - architecture-decision e tdd-cycle"
+    status: pending
+  - id: fase-15-prompts-review
+    content: "Fase 15: Prompts - code-review-backend e code-review-frontend"
+    status: pending
+  - id: fase-16-prompts-planning
+    content: "Fase 16: Prompts - implementation-plan e sql-analysis"
+    status: pending
+  - id: fase-17-docs
+    content: "Fase 17: README completo com guia de extensibilidade + configuracao Cursor + Context7"
+    status: pending
+isProject: false
+---
+
+# Plano de Implementacao - Senior Mind MCP (v2)
+
+## Boas Praticas MCP Aplicadas ao Projeto
+
+O projeto seguira as boas praticas oficiais do Model Context Protocol:
+
+- **Responsabilidade unica**: O servidor tem um dominio claro - auxiliar desenvolvimento de software com mentalidade senior
+- **Toolsets delimitados**: Cada tool tem um contrato especifico com input/output bem definidos via Zod schemas
+- **Contratos primeiro**: Schemas rigorosos de entrada/saida, efeitos colaterais explicitos, erros documentados
+- **Evolucao aditiva**: Estrutura modular que permite adicionar novas tools/resources/prompts sem alterar as existentes
+- **Stateless por padrao**: Nenhum estado mantido entre chamadas; cada invocacao e independente
+- **Descricoes especificas e acionaveis**: Cada tool tera descricao clara de proposito, restricoes e orientacao de uso
+- **Interfaces estaveis**: Schemas versionados; mudancas sempre aditivas
+
+## Visao Geral da Arquitetura
+
+```mermaid
+graph TB
+    subgraph devEnv [Docker Compose]
+        subgraph appContainer [Container App]
+            Server[MCP Server - stdio]
+            ENV[".env - DEVELOPER_NAME"]
+        end
+        subgraph inspectorContainer [Container Inspector]
+            Inspector[MCP Inspector - porta 5173]
+        end
+    end
+
+    subgraph cursor [Cursor IDE]
+        Agent[Agente AI]
+    end
+
+    subgraph mcpInternals [Primitivas MCP]
+        subgraph resources [Resources]
+            R1[clean-code]
+            R2[clean-architecture]
+            R3[object-calisthenics]
+            R4[laravel-conventions]
+            R5[nestjs-patterns]
+            R6[vue-patterns]
+            R7[react-patterns]
+            R8[tdd-reference]
+        end
+
+        subgraph tools [Tools]
+            T1[analyze_architecture]
+            T2[review_code]
+            T3[tdd_guide]
+            T4[compare_sql]
+            T5[plan_implementation]
+            T6[suggest_refactoring]
+        end
+
+        subgraph prompts [Prompts]
+            P1[architecture-decision]
+            P2[tdd-cycle]
+            P3[code-review-backend]
+            P4[code-review-frontend]
+            P5[implementation-plan]
+            P6[sql-analysis]
+        end
+    end
+
+    Agent -->|stdio| Server
+    Inspector -->|stdio| Server
+    ENV -.->|DEVELOPER_NAME| Server
+    Server --> mcpInternals
+```
+
+## Estrutura de Pastas
+
+```
+senior-mind-mcp/
+  src/
+    index.ts                    # Entry point - inicia servidor stdio
+    server.ts                   # Configuracao do McpServer
+    config.ts                   # Carrega .env (DEVELOPER_NAME, etc)
+    tools/
+      index.ts                  # Auto-registro de todas as tools
+      analyze-architecture.ts
+      review-code.ts
+      tdd-guide.ts
+      compare-sql.ts
+      plan-implementation.ts
+      suggest-refactoring.ts
+    prompts/
+      index.ts                  # Auto-registro de todos os prompts
+      architecture-decision.ts
+      tdd-cycle.ts
+      code-review.ts
+      implementation-plan.ts
+      sql-analysis.ts
+    resources/
+      index.ts                  # Auto-registro de todos os resources
+      clean-code.ts
+      clean-architecture.ts
+      object-calisthenics.ts
+      laravel-conventions.ts
+      nestjs-patterns.ts
+      vue-patterns.ts
+      react-patterns.ts
+      tdd-reference.ts
+  .env                          # DEVELOPER_NAME=Italo
+  .env.example                  # Template do .env
+  Dockerfile
+  docker-compose.yml
+  package.json
+  tsconfig.json
+  README.md
+```
+
+---
+
+## Fase 1: Inicializacao do Projeto
+
+**Objetivo**: Criar a base do projeto Node.js/TypeScript com configuracoes minimas.
+
+**O que sera feito**:
+
+- `npm init` com nome `senior-mind-mcp`
+- Instalar dependencias: `@modelcontextprotocol/sdk` (v1.x), `zod`, `dotenv`
+- Instalar devDependencies: `typescript`, `tsx`, `@types/node`
+- Configurar `tsconfig.json` (target ES2022, module NodeNext, strict)
+- Criar `.env` com `DEVELOPER_NAME=Italo`
+- Criar `.env.example` como template
+- Criar `.gitignore` (node_modules, dist, .env)
+- Criar `src/config.ts` que carrega e exporta as variaveis de ambiente
+
+Exemplo de `src/config.ts`:
+
+```typescript
+import dotenv from "dotenv";
+dotenv.config();
+
+export const config = {
+  developerName: process.env.DEVELOPER_NAME || "Desenvolvedor",
+};
+```
+
+**Criterio de conclusao**: `npx tsx src/config.ts` executa sem erros e imprime o nome do desenvolvedor.
+
+---
+
+## Fase 2: Ambiente Docker
+
+**Objetivo**: Containerizar o projeto e configurar o MCP Inspector para testes visuais.
+
+**O que sera feito**:
+
+- Criar `Dockerfile` multi-stage (build + runtime com node:22-alpine)
+- Criar `docker-compose.yml` com dois servicos:
+  - `app`: Container do MCP server (build local, volume para hot-reload com tsx)
+  - `inspector`: MCP Inspector (`node` com `npx @modelcontextprotocol/inspector`) expondo porta 5173
+
+Exemplo de `docker-compose.yml`:
+
+```yaml
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file: .env
+    command: npx tsx watch src/index.ts
+
+  inspector:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    env_file: .env
+    command: npx -y @modelcontextprotocol/inspector npx tsx src/index.ts
+    depends_on:
+      - app
+```
+
+- Criar `Dockerfile`:
+
+```dockerfile
+FROM node:22-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:22-alpine
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+CMD ["node", "dist/index.js"]
+```
+
+**Criterio de conclusao**: `docker compose up inspector` sobe o Inspector acessivel em `http://localhost:5173`.
+
+---
+
+## Fase 3: Servidor MCP Base
+
+**Objetivo**: Criar o servidor MCP funcional com stdio e uma tool de teste.
+
+**O que sera feito**:
+
+- Criar `src/server.ts` com instancia do `McpServer`
+- Criar `src/index.ts` com `StdioServerTransport` e conexao
+- Registrar tool `ping` que retorna "pong - Senior Mind MCP ativo! Ola, {DEVELOPER_NAME}!"
+- Configurar scripts no `package.json`: `build`, `start`, `dev`
+
+Exemplo de `src/server.ts`:
+
+```typescript
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { config } from "./config.js";
+
+export function createServer(): McpServer {
+  const server = new McpServer({
+    name: "senior-mind",
+    version: "1.0.0",
+  });
+
+  server.tool(
+    "ping",
+    "Testa a conexao com o Senior Mind MCP",
+    {},
+    async () => ({
+      content: [{
+        type: "text",
+        text: `pong - Senior Mind MCP ativo! Ola, ${config.developerName}!`,
+      }],
+    })
+  );
+
+  return server;
+}
+```
+
+**Criterio de conclusao**: Testar via MCP Inspector - tool `ping` responde com o nome do `.env`.
+
+---
+
+## Fase 4: Sistema de Registro Automatico
+
+**Objetivo**: Criar a infraestrutura que permite adicionar novas tools/prompts/resources de forma modular, sem alterar arquivos centrais.
+
+**O que sera feito**:
+
+- Criar `src/tools/index.ts` - funcao `registerAllTools(server)` que importa e registra todas as tools
+- Criar `src/prompts/index.ts` - funcao `registerAllPrompts(server)` que importa e registra todos os prompts
+- Criar `src/resources/index.ts` - funcao `registerAllResources(server)` que importa e registra todos os resources
+- Cada modulo (tool/prompt/resource) exporta uma funcao padrao `register(server: McpServer)`
+- Atualizar `src/server.ts` para chamar os tres registradores
+
+Padrao de cada modulo:
+
+```typescript
+// src/tools/analyze-architecture.ts
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+
+export function register(server: McpServer): void {
+  server.tool(
+    "analyze_architecture",
+    "Analisa um problema e propoe opcoes de arquitetura fundamentadas",
+    { /* schema zod */ },
+    async (params) => { /* implementacao */ }
+  );
+}
+```
+
+```typescript
+// src/tools/index.ts
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { register as analyzeArchitecture } from "./analyze-architecture.js";
+// ... demais imports
+
+export function registerAllTools(server: McpServer): void {
+  analyzeArchitecture(server);
+  // ... demais registros
+}
+```
+
+**Por que esse padrao**: Para adicionar uma nova tool, basta criar o arquivo, exportar `register`, e adicionar uma linha no `index.ts` da pasta. Nenhum outro arquivo precisa ser alterado. Isso sera documentado no README.
+
+**Criterio de conclusao**: Tool `ping` migrada para o novo padrao e funcionando no Inspector.
+
+---
+
+## Fase 5: Resources - Fundamentos (Clean Code, Clean Architecture, Object Calisthenics)
+
+**Objetivo**: Criar os 3 resources fundamentais que embasam todas as decisoes do senior developer.
+
+**Resources**:
+
+1. **`clean-code`** (URI: `senior-mind://references/clean-code`)
+   - Principios de Robert C. Martin: nomes significativos, funcoes pequenas, DRY, KISS, SRP, OCP
+   - Exemplos de boas e mas praticas
+   - Regras de formatacao e comentarios
+
+2. **`clean-architecture`** (URI: `senior-mind://references/clean-architecture`)
+   - 4 camadas: Entities, Use Cases, Interface Adapters, Frameworks & Drivers
+   - Regra de Dependencia (sempre de fora para dentro)
+   - Boundary crossing e inversao de dependencia
+   - Quando usar cada camada com exemplos
+
+3. **`object-calisthenics`** (URI: `senior-mind://references/object-calisthenics`)
+   - As 9 regras de Jeff Bay com explicacao e exemplos:
+     1. Um nivel de indentacao por metodo
+     2. Nao use ELSE
+     3. Encapsule tipos primitivos
+     4. Colecoes de primeira classe
+     5. Um ponto por linha
+     6. Nao abrevie
+     7. Mantenha entidades pequenas
+     8. Nao mais que 2 variaveis de instancia
+     9. Sem getters/setters
+
+**Criterio de conclusao**: Os 3 resources aparecem na aba Resources do Inspector com conteudo completo.
+
+---
+
+## Fase 6: Resources - Backend (Laravel, NestJS, TDD)
+
+**Objetivo**: Criar os resources de referencia para tecnologias backend.
+
+**Resources**:
+
+1. **`laravel-conventions`** (URI: `senior-mind://references/laravel-conventions`)
+   - Nomenclatura: Model (singular), Controller (plural), Migration, FormRequest, Resource, Policy
+   - Estrutura de pastas padrao
+   - Padroes Eloquent (scopes, relationships, accessors/mutators)
+   - Service Pattern e Repository Pattern no contexto Laravel
+
+2. **`nestjs-patterns`** (URI: `senior-mind://references/nestjs-patterns`)
+   - Modules, Controllers, Providers/Services
+   - DTOs com class-validator, Pipes, Guards, Interceptors
+   - Injecao de dependencia e modularidade
+   - Repository Pattern com TypeORM/Prisma
+
+3. **`tdd-reference`** (URI: `senior-mind://references/tdd-reference`)
+   - Ciclo Red-Green-Refactor de Kent Beck
+   - Estrategias: Fake It, Triangulation, Obvious Implementation
+   - Tipos de teste: unitario, integracao, e2e
+   - Boas praticas: AAA (Arrange-Act-Assert), test doubles
+
+**Criterio de conclusao**: Os 3 resources aparecem no Inspector com conteudo completo.
+
+---
+
+## Fase 7: Resources - Frontend (Vue 3, React 18)
+
+**Objetivo**: Criar os resources de referencia para tecnologias frontend.
+
+**Resources**:
+
+1. **`vue-patterns`** (URI: `senior-mind://references/vue-patterns`)
+   - Composition API: ref, reactive, computed, watch, watchEffect
+   - Script setup e organizacao de componentes
+   - Composables pattern (extrair logica reutilizavel)
+   - Props tipadas, emits, provide/inject
+
+2. **`react-patterns`** (URI: `senior-mind://references/react-patterns`)
+   - Hooks: useState, useEffect, useCallback, useMemo, useRef
+   - Custom hooks e regras de hooks
+   - Padroes: Container/Presentational, Compound Components, Render Props
+   - React.memo, useMemo, useCallback para performance
+
+**Criterio de conclusao**: Os 2 resources aparecem no Inspector com conteudo completo.
+
+---
+
+## Fase 8: Tool - analyze_architecture
+
+**Objetivo**: Criar a tool que analisa problemas e propoe opcoes de arquitetura fundamentadas.
+
+**Especificacao**:
+
+- **Nome**: `analyze_architecture`
+- **Descricao**: "Analisa um problema/feature e propoe opcoes de arquitetura fundamentadas em Clean Architecture e boas praticas"
+- **Input Schema (Zod)**:
+  - `problem` (string, obrigatorio): Descricao do problema ou feature
+  - `technology` (enum: "laravel", "nestjs", "generic", obrigatorio): Stack tecnologica
+  - `context` (string, opcional): Contexto adicional (restricoes, requisitos nao-funcionais)
+- **Output**: 2-3 opcoes de arquitetura com pros/contras, citacao dos principios (Clean Architecture, SOLID), e recomendacao final personalizada para `{DEVELOPER_NAME}`
+
+**Criterio de conclusao**: Tool testada no Inspector com diferentes cenarios.
+
+---
+
+## Fase 9: Tool - review_code
+
+**Objetivo**: Criar a tool de revisao de codigo contra principios Clean Code e Object Calisthenics.
+
+**Especificacao**:
+
+- **Nome**: `review_code`
+- **Descricao**: "Revisa codigo contra principios de Clean Code e Object Calisthenics, identificando violacoes"
+- **Input Schema (Zod)**:
+  - `code` (string, obrigatorio): Codigo a ser revisado
+  - `language` (enum: "php", "typescript", "javascript", "vue", "react", obrigatorio)
+  - `focus` (enum: "clean-code", "object-calisthenics", "all", default "all")
+- **Output**: Lista de violacoes com: principio violado, localizacao, severidade (alta/media/baixa), sugestao de correcao. Enderecado a `{DEVELOPER_NAME}`.
+
+**Criterio de conclusao**: Tool identifica corretamente violacoes em codigo de exemplo.
+
+---
+
+## Fase 10: Tool - suggest_refactoring
+
+**Objetivo**: Criar a tool que sugere refatoracoes baseadas em Object Calisthenics com interacao.
+
+**Especificacao**:
+
+- **Nome**: `suggest_refactoring`
+- **Descricao**: "Sugere refatoracoes baseadas nas 9 regras de Object Calisthenics com antes/depois"
+- **Input Schema (Zod)**:
+  - `code` (string, obrigatorio): Codigo a ser refatorado
+  - `language` (enum: "php", "typescript", "javascript", obrigatorio)
+  - `rules` (array de strings, opcional): Regras especificas a verificar (default: todas)
+- **Output**: Para cada violacao, retorna: regra violada, codigo original, codigo refatorado, e a pergunta interativa: "{DEVELOPER_NAME}, deseja aplicar a regra [X] do Object Calisthenics aqui?"
+
+**Criterio de conclusao**: Tool gera sugestoes de refatoracao com antes/depois.
+
+---
+
+## Fase 11: Tool - tdd_guide
+
+**Objetivo**: Implementar o fluxo TDD obrigatorio com gates de aprovacao.
+
+**Especificacao**:
+
+- **Nome**: `tdd_guide`
+- **Descricao**: "Guia o ciclo TDD (Red-Green-Refactor) com gates de aprovacao entre fases"
+- **Input Schema (Zod)**:
+  - `feature` (string, obrigatorio): Descricao da feature
+  - `phase` (enum: "red", "green", "refactor", obrigatorio): Fase atual do TDD
+  - `technology` (enum: "laravel", "nestjs", obrigatorio)
+  - `code` (string, opcional): Codigo atual da implementacao (para green/refactor)
+  - `test_code` (string, opcional): Codigo do teste (para green/refactor)
+- **Comportamento por fase**:
+  - **Red**: Gera esqueleto de teste com cenarios (happy path, edge cases, error cases). Finaliza: "{DEVELOPER_NAME}, analise os cenarios do teste antes de prosseguir para a fase Green."
+  - **Green**: Sugere implementacao minima para passar os testes. Foco em "make it work".
+  - **Refactor**: Analisa contra Object Calisthenics e Clean Code. Sugere melhorias especificas.
+
+**Criterio de conclusao**: Tool guia corretamente pelas 3 fases no Inspector.
+
+---
+
+## Fase 12: Tool - compare_sql
+
+**Objetivo**: Criar a tool de comparacao entre abordagens ORM e SQL puro.
+
+**Especificacao**:
+
+- **Nome**: `compare_sql`
+- **Descricao**: "Compara abordagem ORM vs SQL puro para queries complexas, com analise de performance"
+- **Input Schema (Zod)**:
+  - `description` (string, obrigatorio): Descricao da query desejada
+  - `technology` (enum: "laravel-eloquent", "typeorm", "prisma", obrigatorio)
+  - `tables` (string, opcional): Estrutura das tabelas envolvidas
+  - `context` (string, opcional): Contexto adicional (volume de dados, indices, etc)
+- **Output**: Versao ORM, versao SQL puro, comparacao de performance (N+1, JOINs, indices), recomendacao com justificativa. Contexto PostgreSQL/Saude quando aplicavel.
+
+**Criterio de conclusao**: Tool gera comparacoes uteis para queries complexas.
+
+---
+
+## Fase 13: Tool - plan_implementation
+
+**Objetivo**: Criar a tool de planejamento com questionario de alinhamento.
+
+**Especificacao**:
+
+- **Nome**: `plan_implementation`
+- **Descricao**: "Cria plano de implementacao faseado, fazendo perguntas para alinhar regras de negocio"
+- **Input Schema (Zod)**:
+  - `feature` (string, obrigatorio): Descricao da feature
+  - `technology` (enum: "laravel", "nestjs", obrigatorio)
+  - `requirements` (string, opcional): Requisitos ja conhecidos
+- **Output**: Primeiro, gera perguntas de alinhamento sobre regra de negocio. Depois, gera plano dividido em fases independentes (cada fase cabe no contexto do agente), com: estrutura de arquivos, padroes, testes necessarios, e ordem de execucao.
+
+**Criterio de conclusao**: Tool gera perguntas relevantes e plano faseado.
+
+---
+
+## Fase 14: Prompts - Arquitetura e TDD
+
+**Objetivo**: Criar os prompts reutilizaveis para decisoes de arquitetura e fluxo TDD.
+
+**Prompts**:
+
+1. **`architecture-decision`**
+   - **Args**: `problem` (string), `constraints` (string, opcional)
+   - Template ADR (Architecture Decision Record) formal com secoes: Contexto, Decisao, Consequencias, Alternativas Consideradas
+   - Usa `{DEVELOPER_NAME}` no template
+
+2. **`tdd-cycle`**
+   - **Args**: `feature` (string), `technology` (string)
+   - Template completo do ciclo TDD com instrucoes passo a passo para Red, Green e Refactor
+   - Inclui checklist de cada fase
+
+**Criterio de conclusao**: Prompts aparecem na aba Prompts do Inspector e geram templates uteis.
+
+---
+
+## Fase 15: Prompts - Code Review
+
+**Objetivo**: Criar os prompts de code review para backend e frontend.
+
+**Prompts**:
+
+1. **`code-review-backend`**
+   - **Args**: `code` (string), `framework` (enum: "laravel", "nestjs")
+   - Template de review focado em: Clean Code, convencoes do framework, SOLID, performance SQL
+
+2. **`code-review-frontend`**
+   - **Args**: `code` (string), `framework` (enum: "vue", "react")
+   - Template de review focado em: Composition API/hooks, reatividade, componentizacao, performance
+
+**Criterio de conclusao**: Prompts geram templates de review especificos por stack.
+
+---
+
+## Fase 16: Prompts - Planejamento e SQL
+
+**Objetivo**: Criar os prompts de planejamento e analise SQL.
+
+**Prompts**:
+
+1. **`implementation-plan`**
+   - **Args**: `feature` (string), `context` (string, opcional)
+   - Template que gera questionario de alinhamento + plano faseado com checklist
+
+2. **`sql-analysis`**
+   - **Args**: `query` (string), `context` (string, opcional)
+   - Template para analise profunda: EXPLAIN ANALYZE, indices sugeridos, N+1, JOINs vs subqueries
+
+**Criterio de conclusao**: Prompts geram templates uteis e acionaveis.
+
+---
+
+## Fase 17: README, Documentacao e Configuracao Final
+
+**Objetivo**: Documentar tudo e garantir que o projeto e facil de evoluir.
+
+**O que sera feito**:
+
+1. **README.md completo** com:
+   - Descricao do projeto e proposito
+   - Requisitos (Docker, Node.js)
+   - Como executar (`docker compose up`)
+   - Como testar com o MCP Inspector
+   - Lista de todas as tools, prompts e resources disponiveis
+   - Configuracao do `.env`
+
+2. **Guia de Extensibilidade** (secao no README):
+   - "Como adicionar uma nova Tool" - passo a passo com template
+   - "Como adicionar um novo Resource" - passo a passo com template
+   - "Como adicionar um novo Prompt" - passo a passo com template
+   - Convencoes de nomenclatura e organizacao
+   - Exemplo completo de cada tipo
+
+3. **Integracao Context7**: Secao explicando como usar o Context7 MCP em conjunto para:
+   - Memoria de longo prazo das decisoes tomadas
+   - Busca de documentacao de frameworks
+
+4. **Configuracao Cursor**: Instruir como adicionar ao `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "senior-mind": {
+      "command": "docker",
+      "args": ["compose", "exec", "app", "node", "dist/index.js"]
+    }
+  }
+}
+```
+
+Ou para uso direto (sem Docker):
+
+```json
+{
+  "mcpServers": {
+    "senior-mind": {
+      "command": "npx",
+      "args": ["tsx", "src/index.ts"],
+      "cwd": "/caminho/para/senior-mind-mcp",
+      "env": { "DEVELOPER_NAME": "Italo" }
+    }
+  }
+}
+```
+
+5. **Nota sobre observabilidade**: Registrar no README que logs e configs de K8s NAO sao incluidos por padrao (apenas sob solicitacao explicita)
+
+**Criterio de conclusao**: README completo, projeto configurado no Cursor e funcionando end-to-end.
+
+---
+
+## Dependencias do Projeto
+
+```json
+{
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "zod": "^3.25.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "tsx": "^4.0.0",
+    "@types/node": "^22.0.0"
+  }
+}
+```
+
+## Resumo das Boas Praticas MCP no Projeto
+
+- **Schemas Zod rigorosos** em todas as tools (validacao de entrada na primeira falha)
+- **Descricoes claras e acionaveis** em cada tool/prompt/resource
+- **Modularidade**: Padrao `register(server)` para extensibilidade sem tocar no core
+- **Personalizacao via .env**: Nome do desenvolvedor configuravel, sem hardcode
+- **Docker para isolamento**: Ambiente reproduzivel e MCP Inspector integrado
+- **Sem estado**: Cada chamada e independente; sem memoria entre invocacoes
+- **Sem kitchen-sink**: Cada tool faz UMA coisa bem feita
+- **Evolucao aditiva**: Adicionar features novas nunca quebra as existentes
