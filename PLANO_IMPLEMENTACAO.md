@@ -10,10 +10,10 @@ todos:
     status: completed
   - id: fase-2b-testes
     content: "Fase 2b: Ambiente de testes unitarios (Vitest) e primeiro teste"
-    status: pending
+    status: completed
   - id: fase-3-servidor
     content: "Fase 3: Servidor MCP base (McpServer + StdioServerTransport + tool ping)"
-    status: pending
+    status: completed
   - id: fase-4-arquitetura-registro
     content: "Fase 4: Sistema de registro automatico de tools/prompts/resources"
     status: pending
@@ -275,7 +275,7 @@ CMD ["node", "dist/index.js"]
 
 ---
 
-## Fase 2b: Ambiente de Testes Unitarios (Vitest)
+## Fase 2b: Ambiente de Testes Unitarios (Vitest) (Concluída)
 
 **Objetivo**: Configurar o Vitest para testes unitarios e garantir que o TDD possa ser seguido nas proximas fases.
 
@@ -292,9 +292,11 @@ Estrutura sugerida:
 
 **Criterio de conclusao**: `npm run test:run` executa os testes de config e todos passam. Nenhuma fase seguinte que implementar codigo deve ser dada como concluida sem testes passando.
 
+**Status**: Concluída. Vitest instalado (v2.x), `vitest.config.ts` criado, scripts `test` e `test:run` adicionados ao `package.json`. Teste `tests/config.test.ts` valida o valor default e o valor do env com mock de dotenv.
+
 ---
 
-## Fase 3: Servidor MCP Base
+## Fase 3: Servidor MCP Base (Concluída)
 
 **Objetivo**: Criar o servidor MCP funcional com stdio e uma tool de teste.
 
@@ -337,6 +339,8 @@ export function createServer(): McpServer {
 ```
 
 **Criterio de conclusao**: Testes em `tests/server.test.ts` passam (`npm run test:run`). Testar via MCP Inspector - tool `ping` responde com o nome do `.env`.
+
+**Status**: Concluída. `src/server.ts` e `src/index.ts` ja existiam da Fase 2. Testes em `tests/server.test.ts` validam: listagem da tool `ping`, resposta com texto esperado e inclusao do nome do desenvolvedor. Usa `InMemoryTransport` para testar o servidor sem stdio. Todos os 5 testes passam.
 
 ---
 
