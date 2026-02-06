@@ -7,7 +7,7 @@ todos:
     status: completed
   - id: fase-2-docker
     content: "Fase 2: Ambiente Docker (Dockerfile, docker-compose com app + MCP Inspector)"
-    status: pending
+    status: completed
   - id: fase-2b-testes
     content: "Fase 2b: Ambiente de testes unitarios (Vitest) e primeiro teste"
     status: pending
@@ -214,7 +214,7 @@ export const config = {
 
 ---
 
-## Fase 2: Ambiente Docker
+## Fase 2: Ambiente Docker (Concluída)
 
 **Objetivo**: Containerizar o projeto e configurar o MCP Inspector para testes visuais.
 
@@ -269,7 +269,9 @@ COPY --from=builder /app/package.json ./
 CMD ["node", "dist/index.js"]
 ```
 
-**Criterio de conclusao**: `docker compose up inspector` sobe o Inspector acessivel em `http://localhost:5173`.
+**Criterio de conclusao**: `docker compose up inspector` sobe o Inspector acessivel em `http://localhost:6274`.
+
+**Status**: Concluída. Portas padrão do Inspector: 6274 (UI) e 6277 (proxy). Foi criado tambem um entry point minimo em `src/index.ts` e `src/server.ts` para o Inspector poder subir o servidor MCP; a Fase 3 expandira esse servidor.
 
 ---
 

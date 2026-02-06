@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file: .env
+    command: npx tsx watch src/index.ts
+
+  inspector:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - inspector_node_modules:/app/node_modules
+    ports:
+      - "6274:6274"
+      - "6277:6277"
+    environment:
+      HOST: "0.0.0.0"
+      MCP_AUTO_OPEN_ENABLED: "false"
+      ALLOWED_ORIGINS: "http://localhost:6274,http://0.0.0.0:6274"
+    env_file: .env
+    command: sh -c "npm install && npx -y @modelcontextprotocol/inspector npx tsx src/index.ts"
+    depends_on:
+      - app
+
+volumes:
+  inspector_node_modules:
