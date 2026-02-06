@@ -4,9 +4,12 @@ overview: Criar um servidor MCP (Model Context Protocol) em TypeScript com trans
 todos:
   - id: fase-1-projeto
     content: "Fase 1: Inicializacao do projeto (package.json, tsconfig, .env, .gitignore)"
-    status: pending
+    status: completed
   - id: fase-2-docker
     content: "Fase 2: Ambiente Docker (Dockerfile, docker-compose com app + MCP Inspector)"
+    status: pending
+  - id: fase-2b-testes
+    content: "Fase 2b: Ambiente de testes unitarios (Vitest) e primeiro teste"
     status: pending
   - id: fase-3-servidor
     content: "Fase 3: Servidor MCP base (McpServer + StdioServerTransport + tool ping)"
@@ -57,6 +60,10 @@ isProject: false
 ---
 
 # Plano de Implementacao - Senior Mind MCP (v2)
+
+**Convenção:** Quando uma fase estiver marcada como **(Concluída)** no título ou com status concluído na lista de todos, significa que ela já foi realizada e **não precisa mais ser feita**. Avance para a próxima fase pendente.
+
+**TDD durante o plano:** Em todas as fases que implementam código, seguimos o ciclo **Red → Green → Refactor** (TDD). Ou seja: (1) **Red** — escrever primeiro os testes unitários que falham; (2) **Green** — implementar o mínimo para os testes passarem; (3) **Refactor** — melhorar o código mantendo os testes verdes. Cada fase que entrega código deve incluir ou atualizar testes e só é considerada concluída com os testes passando (`npm test`).
 
 ## Boas Praticas MCP Aplicadas ao Projeto
 
@@ -162,14 +169,20 @@ senior-mind-mcp/
   .env.example                  # Template do .env
   Dockerfile
   docker-compose.yml
+  tests/                       # Testes unitarios (espelham src/)
+    config.test.ts
+    server.test.ts
+    tools/
+    ...
   package.json
   tsconfig.json
+  vitest.config.ts              # Configuracao Vitest
   README.md
 ```
 
 ---
 
-## Fase 1: Inicializacao do Projeto
+## Fase 1: Inicializacao do Projeto (Concluída)
 
 **Objetivo**: Criar a base do projeto Node.js/TypeScript com configuracoes minimas.
 
@@ -196,6 +209,8 @@ export const config = {
 ```
 
 **Criterio de conclusao**: `npx tsx src/config.ts` executa sem erros e imprime o nome do desenvolvedor.
+
+**Status**: Concluída.
 
 ---
 
@@ -258,9 +273,30 @@ CMD ["node", "dist/index.js"]
 
 ---
 
+## Fase 2b: Ambiente de Testes Unitarios (Vitest)
+
+**Objetivo**: Configurar o Vitest para testes unitarios e garantir que o TDD possa ser seguido nas proximas fases.
+
+**O que sera feito** (TDD: Red → Green → Refactor):
+
+1. **Red**: Criar um teste que valide `config.developerName` (ex.: com mock de `process.env`) — o teste falha ate existir a config.
+2. **Green**: Instalar Vitest (`vitest` como devDependency), criar `vitest.config.ts` (com suporte a ESM/TypeScript), configurar script `"test": "vitest"` e `"test:run": "vitest run"` no `package.json`. Ajustar o teste para passar usando `src/config.ts`.
+3. **Refactor**: Organizar pasta `tests/` (ex.: `tests/config.test.ts`). Garantir que `npm test` e `npm run test:run` executam sem erros.
+
+Estrutura sugerida:
+
+- `vitest.config.ts`: configuração com `globals` opcional, `include: ["tests/**/*.test.ts"]`, ambiente `node`.
+- `tests/config.test.ts`: testes para `config.developerName` (valor default quando `DEVELOPER_NAME` ausente; valor do env quando definido).
+
+**Criterio de conclusao**: `npm run test:run` executa os testes de config e todos passam. Nenhuma fase seguinte que implementar codigo deve ser dada como concluida sem testes passando.
+
+---
+
 ## Fase 3: Servidor MCP Base
 
 **Objetivo**: Criar o servidor MCP funcional com stdio e uma tool de teste.
+
+**TDD**: (1) **Red** — escrever testes em `tests/server.test.ts` que validem que o servidor expoe a tool `ping` e que a resposta contem o texto esperado (usando nome do config); (2) **Green** — implementar `src/server.ts` e `src/index.ts` para os testes passarem; (3) **Refactor** — se necessario.
 
 **O que sera feito**:
 
@@ -268,6 +304,7 @@ CMD ["node", "dist/index.js"]
 - Criar `src/index.ts` com `StdioServerTransport` e conexao
 - Registrar tool `ping` que retorna "pong - Senior Mind MCP ativo! Ola, {DEVELOPER_NAME}!"
 - Configurar scripts no `package.json`: `build`, `start`, `dev`
+- Escrever testes unitarios que validem a tool `ping` e o conteudo da resposta
 
 Exemplo de `src/server.ts`:
 
@@ -297,13 +334,15 @@ export function createServer(): McpServer {
 }
 ```
 
-**Criterio de conclusao**: Testar via MCP Inspector - tool `ping` responde com o nome do `.env`.
+**Criterio de conclusao**: Testes em `tests/server.test.ts` passam (`npm run test:run`). Testar via MCP Inspector - tool `ping` responde com o nome do `.env`.
 
 ---
 
 ## Fase 4: Sistema de Registro Automatico
 
 **Objetivo**: Criar a infraestrutura que permite adicionar novas tools/prompts/resources de forma modular, sem alterar arquivos centrais.
+
+**TDD**: (1) **Red** — testes que verifiquem que, apos registrar tools/prompts/resources via `registerAll*`, o servidor expoe as capacidades esperadas (ex.: listagem de tools inclui `ping` e as novas); (2) **Green** — implementar os `index.ts` de registro e migrar `ping` para o padrao; (3) **Refactor** — se necessario.
 
 **O que sera feito**:
 
@@ -344,13 +383,15 @@ export function registerAllTools(server: McpServer): void {
 
 **Por que esse padrao**: Para adicionar uma nova tool, basta criar o arquivo, exportar `register`, e adicionar uma linha no `index.ts` da pasta. Nenhum outro arquivo precisa ser alterado. Isso sera documentado no README.
 
-**Criterio de conclusao**: Tool `ping` migrada para o novo padrao e funcionando no Inspector.
+**Criterio de conclusao**: Testes passam para o novo sistema de registro. Tool `ping` migrada para o novo padrao e funcionando no Inspector.
 
 ---
 
 ## Fase 5: Resources - Fundamentos (Clean Code, Clean Architecture, Object Calisthenics)
 
 **Objetivo**: Criar os 3 resources fundamentais que embasam todas as decisoes do senior developer.
+
+**TDD**: (1) **Red** — testes que verifiquem que os resources `clean-code`, `clean-architecture` e `object-calisthenics` estao disponiveis e retornam conteudo nao vazio (e contem termos-chave esperados); (2) **Green** — implementar os tres resources; (3) **Refactor** — se necessario.
 
 **Resources**:
 
@@ -377,13 +418,15 @@ export function registerAllTools(server: McpServer): void {
      8. Nao mais que 2 variaveis de instancia
      9. Sem getters/setters
 
-**Criterio de conclusao**: Os 3 resources aparecem na aba Resources do Inspector com conteudo completo.
+**Criterio de conclusao**: Testes unitarios para os 3 resources passam. Os 3 resources aparecem na aba Resources do Inspector com conteudo completo.
 
 ---
 
 ## Fase 6: Resources - Backend (Laravel, NestJS, TDD)
 
 **Objetivo**: Criar os resources de referencia para tecnologias backend.
+
+**TDD**: (1) **Red** — testes para os resources `laravel-conventions`, `nestjs-patterns` e `tdd-reference` (disponibilidade e conteudo nao vazio); (2) **Green** — implementar os tres resources; (3) **Refactor** — se necessario.
 
 **Resources**:
 
@@ -405,13 +448,15 @@ export function registerAllTools(server: McpServer): void {
    - Tipos de teste: unitario, integracao, e2e
    - Boas praticas: AAA (Arrange-Act-Assert), test doubles
 
-**Criterio de conclusao**: Os 3 resources aparecem no Inspector com conteudo completo.
+**Criterio de conclusao**: Testes unitarios para os 3 resources passam. Os 3 resources aparecem no Inspector com conteudo completo.
 
 ---
 
 ## Fase 7: Resources - Frontend (Vue 3, React 18)
 
 **Objetivo**: Criar os resources de referencia para tecnologias frontend.
+
+**TDD**: (1) **Red** — testes para `vue-patterns` e `react-patterns` (disponibilidade e conteudo nao vazio); (2) **Green** — implementar os dois resources; (3) **Refactor** — se necessario.
 
 **Resources**:
 
@@ -427,13 +472,15 @@ export function registerAllTools(server: McpServer): void {
    - Padroes: Container/Presentational, Compound Components, Render Props
    - React.memo, useMemo, useCallback para performance
 
-**Criterio de conclusao**: Os 2 resources aparecem no Inspector com conteudo completo.
+**Criterio de conclusao**: Testes unitarios para os 2 resources passam. Os 2 resources aparecem no Inspector com conteudo completo.
 
 ---
 
 ## Fase 8: Tool - analyze_architecture
 
 **Objetivo**: Criar a tool que analisa problemas e propoe opcoes de arquitetura fundamentadas.
+
+**TDD**: (1) **Red** — testes que chamem `analyze_architecture` com um problema e tecnologia e validem que a resposta contem opcoes, pros/contras e recomendacao; (2) **Green** — implementar a tool; (3) **Refactor** — se necessario.
 
 **Especificacao**:
 
@@ -445,13 +492,15 @@ export function registerAllTools(server: McpServer): void {
   - `context` (string, opcional): Contexto adicional (restricoes, requisitos nao-funcionais)
 - **Output**: 2-3 opcoes de arquitetura com pros/contras, citacao dos principios (Clean Architecture, SOLID), e recomendacao final personalizada para `{DEVELOPER_NAME}`
 
-**Criterio de conclusao**: Tool testada no Inspector com diferentes cenarios.
+**Criterio de conclusao**: Testes unitarios para `analyze_architecture` passam. Tool testada no Inspector com diferentes cenarios.
 
 ---
 
 ## Fase 9: Tool - review_code
 
 **Objetivo**: Criar a tool de revisao de codigo contra principios Clean Code e Object Calisthenics.
+
+**TDD**: (1) **Red** — testes com trechos de codigo que violem principios conhecidos; validar que a resposta lista violacoes e sugestoes; (2) **Green** — implementar a tool; (3) **Refactor** — se necessario.
 
 **Especificacao**:
 
@@ -463,13 +512,15 @@ export function registerAllTools(server: McpServer): void {
   - `focus` (enum: "clean-code", "object-calisthenics", "all", default "all")
 - **Output**: Lista de violacoes com: principio violado, localizacao, severidade (alta/media/baixa), sugestao de correcao. Enderecado a `{DEVELOPER_NAME}`.
 
-**Criterio de conclusao**: Tool identifica corretamente violacoes em codigo de exemplo.
+**Criterio de conclusao**: Testes unitarios para `review_code` passam. Tool identifica corretamente violacoes em codigo de exemplo.
 
 ---
 
 ## Fase 10: Tool - suggest_refactoring
 
 **Objetivo**: Criar a tool que sugere refatoracoes baseadas em Object Calisthenics com interacao.
+
+**TDD**: (1) **Red** — testes com codigo que viole regras de Object Calisthenics; validar que a resposta contem regra violada, antes/depois e pergunta para o desenvolvedor; (2) **Green** — implementar a tool; (3) **Refactor** — se necessario.
 
 **Especificacao**:
 
@@ -481,13 +532,15 @@ export function registerAllTools(server: McpServer): void {
   - `rules` (array de strings, opcional): Regras especificas a verificar (default: todas)
 - **Output**: Para cada violacao, retorna: regra violada, codigo original, codigo refatorado, e a pergunta interativa: "{DEVELOPER_NAME}, deseja aplicar a regra [X] do Object Calisthenics aqui?"
 
-**Criterio de conclusao**: Tool gera sugestoes de refatoracao com antes/depois.
+**Criterio de conclusao**: Testes unitarios para `suggest_refactoring` passam. Tool gera sugestoes de refatoracao com antes/depois.
 
 ---
 
 ## Fase 11: Tool - tdd_guide
 
 **Objetivo**: Implementar o fluxo TDD obrigatorio com gates de aprovacao.
+
+**TDD**: (1) **Red** — testes para cada fase (red, green, refactor): validar que a saida contem o esperado (ex.: red gera cenarios de teste e mensagem para o desenvolvedor); (2) **Green** — implementar a tool; (3) **Refactor** — se necessario.
 
 **Especificacao**:
 
@@ -504,13 +557,15 @@ export function registerAllTools(server: McpServer): void {
   - **Green**: Sugere implementacao minima para passar os testes. Foco em "make it work".
   - **Refactor**: Analisa contra Object Calisthenics e Clean Code. Sugere melhorias especificas.
 
-**Criterio de conclusao**: Tool guia corretamente pelas 3 fases no Inspector.
+**Criterio de conclusao**: Testes unitarios para `tdd_guide` passam. Tool guia corretamente pelas 3 fases no Inspector.
 
 ---
 
 ## Fase 12: Tool - compare_sql
 
 **Objetivo**: Criar a tool de comparacao entre abordagens ORM e SQL puro.
+
+**TDD**: (1) **Red** — testes com descricao de query e tecnologia; validar que a resposta inclui versao ORM, SQL puro e comparacao/recomendacao; (2) **Green** — implementar a tool; (3) **Refactor** — se necessario.
 
 **Especificacao**:
 
@@ -523,13 +578,15 @@ export function registerAllTools(server: McpServer): void {
   - `context` (string, opcional): Contexto adicional (volume de dados, indices, etc)
 - **Output**: Versao ORM, versao SQL puro, comparacao de performance (N+1, JOINs, indices), recomendacao com justificativa. Contexto PostgreSQL/Saude quando aplicavel.
 
-**Criterio de conclusao**: Tool gera comparacoes uteis para queries complexas.
+**Criterio de conclusao**: Testes unitarios para `compare_sql` passam. Tool gera comparacoes uteis para queries complexas.
 
 ---
 
 ## Fase 13: Tool - plan_implementation
 
 **Objetivo**: Criar a tool de planejamento com questionario de alinhamento.
+
+**TDD**: (1) **Red** — testes com feature e tecnologia; validar que a resposta contem perguntas de alinhamento e plano em fases; (2) **Green** — implementar a tool; (3) **Refactor** — se necessario.
 
 **Especificacao**:
 
@@ -541,13 +598,15 @@ export function registerAllTools(server: McpServer): void {
   - `requirements` (string, opcional): Requisitos ja conhecidos
 - **Output**: Primeiro, gera perguntas de alinhamento sobre regra de negocio. Depois, gera plano dividido em fases independentes (cada fase cabe no contexto do agente), com: estrutura de arquivos, padroes, testes necessarios, e ordem de execucao.
 
-**Criterio de conclusao**: Tool gera perguntas relevantes e plano faseado.
+**Criterio de conclusao**: Testes unitarios para `plan_implementation` passam. Tool gera perguntas relevantes e plano faseado.
 
 ---
 
 ## Fase 14: Prompts - Arquitetura e TDD
 
 **Objetivo**: Criar os prompts reutilizaveis para decisoes de arquitetura e fluxo TDD.
+
+**TDD**: (1) **Red** — testes que obtenham os prompts `architecture-decision` e `tdd-cycle` com argumentos e validem que as mensagens geradas contem os argumentos e secoes esperadas; (2) **Green** — implementar os dois prompts; (3) **Refactor** — se necessario.
 
 **Prompts**:
 
@@ -561,13 +620,15 @@ export function registerAllTools(server: McpServer): void {
    - Template completo do ciclo TDD com instrucoes passo a passo para Red, Green e Refactor
    - Inclui checklist de cada fase
 
-**Criterio de conclusao**: Prompts aparecem na aba Prompts do Inspector e geram templates uteis.
+**Criterio de conclusao**: Testes unitarios para os prompts passam. Prompts aparecem na aba Prompts do Inspector e geram templates uteis.
 
 ---
 
 ## Fase 15: Prompts - Code Review
 
 **Objetivo**: Criar os prompts de code review para backend e frontend.
+
+**TDD**: (1) **Red** — testes para `code-review-backend` e `code-review-frontend` com argumentos; validar que as mensagens contem o codigo e o framework; (2) **Green** — implementar os prompts; (3) **Refactor** — se necessario.
 
 **Prompts**:
 
@@ -579,13 +640,15 @@ export function registerAllTools(server: McpServer): void {
    - **Args**: `code` (string), `framework` (enum: "vue", "react")
    - Template de review focado em: Composition API/hooks, reatividade, componentizacao, performance
 
-**Criterio de conclusao**: Prompts geram templates de review especificos por stack.
+**Criterio de conclusao**: Testes unitarios para os prompts passam. Prompts geram templates de review especificos por stack.
 
 ---
 
 ## Fase 16: Prompts - Planejamento e SQL
 
 **Objetivo**: Criar os prompts de planejamento e analise SQL.
+
+**TDD**: (1) **Red** — testes para `implementation-plan` e `sql-analysis` com argumentos; validar que as mensagens contem feature/query e orientacoes esperadas; (2) **Green** — implementar os prompts; (3) **Refactor** — se necessario.
 
 **Prompts**:
 
@@ -597,7 +660,7 @@ export function registerAllTools(server: McpServer): void {
    - **Args**: `query` (string), `context` (string, opcional)
    - Template para analise profunda: EXPLAIN ANALYZE, indices sugeridos, N+1, JOINs vs subqueries
 
-**Criterio de conclusao**: Prompts geram templates uteis e acionaveis.
+**Criterio de conclusao**: Testes unitarios para os prompts passam. Prompts geram templates uteis e acionaveis.
 
 ---
 
@@ -605,12 +668,15 @@ export function registerAllTools(server: McpServer): void {
 
 **Objetivo**: Documentar tudo e garantir que o projeto e facil de evoluir.
 
+**TDD**: Nesta fase nao ha codigo de producao novo; manter a suite de testes passando e documentar no README como executar os testes (`npm test`, `npm run test:run`).
+
 **O que sera feito**:
 
 1. **README.md completo** com:
    - Descricao do projeto e proposito
    - Requisitos (Docker, Node.js)
    - Como executar (`docker compose up`)
+   - Como rodar os testes unitarios (`npm test`, `npm run test:run`)
    - Como testar com o MCP Inspector
    - Lista de todas as tools, prompts e resources disponiveis
    - Configuracao do `.env`
@@ -670,9 +736,10 @@ Ou para uso direto (sem Docker):
     "dotenv": "^16.4.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0",
     "tsx": "^4.0.0",
-    "@types/node": "^22.0.0"
+    "typescript": "^5.7.0",
+    "vitest": "^2.0.0"
   }
 }
 ```
