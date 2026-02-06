@@ -37,13 +37,13 @@ todos:
     status: completed
   - id: fase-11-tool-tdd
     content: "Fase 11: Tool - tdd_guide (Red/Green/Refactor com gates)"
-    status: pending
+    status: completed
   - id: fase-12-tool-sql
     content: "Fase 12: Tool - compare_sql (ORM vs SQL puro)"
-    status: pending
+    status: completed
   - id: fase-13-tool-planning
     content: "Fase 13: Tool - plan_implementation (questionario + plano faseado)"
-    status: pending
+    status: completed
   - id: fase-14-prompts-arch
     content: "Fase 14: Prompts - architecture-decision e tdd-cycle"
     status: pending
@@ -556,7 +556,7 @@ export function registerAllTools(server: McpServer): void {
 
 ---
 
-## Fase 11: Tool - tdd_guide
+## Fase 11: Tool - tdd_guide (Concluída)
 
 **Objetivo**: Implementar o fluxo TDD obrigatorio com gates de aprovacao.
 
@@ -579,9 +579,11 @@ export function registerAllTools(server: McpServer): void {
 
 **Criterio de conclusao**: Testes unitarios para `tdd_guide` passam. Tool guia corretamente pelas 3 fases no Inspector.
 
+**Status**: Concluída. Criado `src/tools/tdd-guide.ts` com 3 fases: Red (cenarios de teste com happy path, edge cases, error cases + checklist + gate), Green (estrategias Fake It/Triangulate, estrutura de implementacao), Refactor (checklists Clean Code, Object Calisthenics, SOLID + padroes por framework). 11 testes.
+
 ---
 
-## Fase 12: Tool - compare_sql
+## Fase 12: Tool - compare_sql (Concluída)
 
 **Objetivo**: Criar a tool de comparacao entre abordagens ORM e SQL puro.
 
@@ -600,9 +602,11 @@ export function registerAllTools(server: McpServer): void {
 
 **Criterio de conclusao**: Testes unitarios para `compare_sql` passam. Tool gera comparacoes uteis para queries complexas.
 
+**Status**: Concluída. Criado `src/tools/compare-sql.ts` com geracoes ORM (Laravel Eloquent, TypeORM, Prisma) e SQL puro por tipo de query (join, agregacao, simples), analise de performance (N+1, JOINs, indices) e recomendacao inteligente. 10 testes.
+
 ---
 
-## Fase 13: Tool - plan_implementation
+## Fase 13: Tool - plan_implementation (Concluída)
 
 **Objetivo**: Criar a tool de planejamento com questionario de alinhamento.
 
@@ -619,6 +623,8 @@ export function registerAllTools(server: McpServer): void {
 - **Output**: Primeiro, gera perguntas de alinhamento sobre regra de negocio. Depois, gera plano dividido em fases independentes (cada fase cabe no contexto do agente), com: estrutura de arquivos, padroes, testes necessarios, e ordem de execucao.
 
 **Criterio de conclusao**: Testes unitarios para `plan_implementation` passam. Tool gera perguntas relevantes e plano faseado.
+
+**Status**: Concluída. Criado `src/tools/plan-implementation.ts` com perguntas de alinhamento (universais + por stack) e plano em 5 fases (Entidades, Repository, Service/TDD, API/Controller, Refinamentos) com estrutura de arquivos por framework e ordem de execucao. 10 testes. Total: 96 testes passando.
 
 ---
 
@@ -674,7 +680,8 @@ export function registerAllTools(server: McpServer): void {
 
 1. **`implementation-plan`**
    - **Args**: `feature` (string), `context` (string, opcional)
-   - Template que gera questionario de alinhamento + plano faseado com checklist
+   - Template que gera questionario de alinhamento + plano faseado com checklist, onde cada fase deve permitir ser implementada de forma indepente.
+   -  As fases do checklist deve ser pequenas ou médias no máximo
 
 2. **`sql-analysis`**
    - **Args**: `query` (string), `context` (string, opcional)
