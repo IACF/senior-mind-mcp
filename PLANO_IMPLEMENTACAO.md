@@ -31,10 +31,10 @@ todos:
     status: completed
   - id: fase-9-tool-review
     content: "Fase 9: Tool - review_code"
-    status: pending
+    status: completed
   - id: fase-10-tool-refactoring
     content: "Fase 10: Tool - suggest_refactoring (Object Calisthenics)"
-    status: pending
+    status: completed
   - id: fase-11-tool-tdd
     content: "Fase 11: Tool - tdd_guide (Red/Green/Refactor com gates)"
     status: pending
@@ -512,7 +512,7 @@ export function registerAllTools(server: McpServer): void {
 
 ---
 
-## Fase 9: Tool - review_code
+## Fase 9: Tool - review_code (Concluída)
 
 **Objetivo**: Criar a tool de revisao de codigo contra principios Clean Code e Object Calisthenics.
 
@@ -530,9 +530,11 @@ export function registerAllTools(server: McpServer): void {
 
 **Criterio de conclusao**: Testes unitarios para `review_code` passam. Tool identifica corretamente violacoes em codigo de exemplo.
 
+**Status**: Concluída. Criado `src/tools/review-code.ts` com deteccao de violacoes Clean Code (any, console.log, funcoes longas, nomes curtos, muitos parametros, codigo comentado) e Object Calisthenics (else, indentacao profunda, cadeias de chamadas, abreviacoes, getters/setters). Saida com severidade alta/media/baixa, localizacao e sugestoes. 9 testes em `tests/tools/review-code.test.ts`.
+
 ---
 
-## Fase 10: Tool - suggest_refactoring
+## Fase 10: Tool - suggest_refactoring (Concluída)
 
 **Objetivo**: Criar a tool que sugere refatoracoes baseadas em Object Calisthenics com interacao.
 
@@ -549,6 +551,8 @@ export function registerAllTools(server: McpServer): void {
 - **Output**: Para cada violacao, retorna: regra violada, codigo original, codigo refatorado, e a pergunta interativa: "{DEVELOPER_NAME}, deseja aplicar a regra [X] do Object Calisthenics aqui?"
 
 **Criterio de conclusao**: Testes unitarios para `suggest_refactoring` passam. Tool gera sugestoes de refatoracao com antes/depois.
+
+**Status**: Concluída. Criado `src/tools/suggest-refactoring.ts` com deteccao e sugestao de refatoracao para regras: no-else, indentacao, encapsular primitivos, um ponto por linha e sem getters/setters. Cada sugestao inclui antes/depois e pergunta interativa com DEVELOPER_NAME. 8 testes em `tests/tools/suggest-refactoring.test.ts`. Total: 65 testes passando.
 
 ---
 
