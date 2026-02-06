@@ -46,7 +46,7 @@ todos:
     status: completed
   - id: fase-14-prompts-arch
     content: "Fase 14: Prompts - architecture-decision e tdd-cycle"
-    status: pending
+    status: completed
   - id: fase-15-prompts-review
     content: "Fase 15: Prompts - code-review-backend e code-review-frontend"
     status: pending
@@ -628,7 +628,7 @@ export function registerAllTools(server: McpServer): void {
 
 ---
 
-## Fase 14: Prompts - Arquitetura e TDD
+## Fase 14: Prompts - Arquitetura e TDD (Concluída)
 
 **Objetivo**: Criar os prompts reutilizaveis para decisoes de arquitetura e fluxo TDD.
 
@@ -647,6 +647,8 @@ export function registerAllTools(server: McpServer): void {
    - Inclui checklist de cada fase
 
 **Criterio de conclusao**: Testes unitarios para os prompts passam. Prompts aparecem na aba Prompts do Inspector e geram templates uteis.
+
+**Status**: Concluída. Criados `src/prompts/architecture-decision.ts` (template ADR com secoes Contexto, Decisao, Consequencias, Alternativas) e `src/prompts/tdd-cycle.ts` (template TDD completo com Red/Green/Refactor, checklists e estrategias). Registrados em `src/prompts/index.ts`. 12 testes em `tests/prompts/architecture-tdd.test.ts`. Total: 108 testes passando.
 
 ---
 
