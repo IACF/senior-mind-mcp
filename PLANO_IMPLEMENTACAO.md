@@ -49,10 +49,10 @@ todos:
     status: completed
   - id: fase-15-prompts-review
     content: "Fase 15: Prompts - code-review-backend e code-review-frontend"
-    status: pending
+    status: completed
   - id: fase-16-prompts-planning
     content: "Fase 16: Prompts - implementation-plan e sql-analysis"
-    status: pending
+    status: completed
   - id: fase-17-docs
     content: "Fase 17: README completo com guia de extensibilidade + configuracao Cursor + Context7"
     status: pending
@@ -652,7 +652,7 @@ export function registerAllTools(server: McpServer): void {
 
 ---
 
-## Fase 15: Prompts - Code Review
+## Fase 15: Prompts - Code Review (Concluída)
 
 **Objetivo**: Criar os prompts de code review para backend e frontend.
 
@@ -670,9 +670,11 @@ export function registerAllTools(server: McpServer): void {
 
 **Criterio de conclusao**: Testes unitarios para os prompts passam. Prompts geram templates de review especificos por stack.
 
+**Status**: Concluída. Criados `src/prompts/code-review-backend.ts` (Clean Code, convencoes Laravel/NestJS, SOLID, performance SQL, seguranca) e `src/prompts/code-review-frontend.ts` (Composition API/Hooks, reatividade, componentizacao, performance, qualidade). 10 testes em `tests/prompts/code-review.test.ts`.
+
 ---
 
-## Fase 16: Prompts - Planejamento e SQL
+## Fase 16: Prompts - Planejamento e SQL (Concluída)
 
 **Objetivo**: Criar os prompts de planejamento e analise SQL.
 
@@ -690,6 +692,8 @@ export function registerAllTools(server: McpServer): void {
    - Template para analise profunda: EXPLAIN ANALYZE, indices sugeridos, N+1, JOINs vs subqueries
 
 **Criterio de conclusao**: Testes unitarios para os prompts passam. Prompts geram templates uteis e acionaveis.
+
+**Status**: Concluída. Criados `src/prompts/implementation-plan.ts` (questionario de alinhamento + plano faseado com checklists em 5 fases independentes) e `src/prompts/sql-analysis.ts` (EXPLAIN ANALYZE, indices, N+1, JOINs vs subqueries, otimizacoes). 12 testes em `tests/prompts/planning-sql.test.ts`. Total: 130 testes passando.
 
 ---
 
@@ -710,18 +714,74 @@ export function registerAllTools(server: McpServer): void {
    - Lista de todas as tools, prompts e resources disponiveis
    - Configuracao do `.env`
 
-2. **Guia de Extensibilidade** (secao no README):
+2. **Guia de Uso no Agente de IA** (secao no README):
+   Explicar como o agente (Cursor, Claude Desktop, etc.) usa cada tipo de componente MCP no dia a dia:
+
+   **2.1. Resources — Base de conhecimento passiva**
+   - Resources sao **lidos automaticamente** pelo agente quando ele precisa de contexto sobre um assunto
+   - O agente consulta resources como se fosse uma documentacao interna
+   - Exemplos de uso real:
+     - Ao pedir "revise este codigo", o agente le `senior-mind://clean-code` e `senior-mind://object-calisthenics` para fundamentar a revisao
+     - Ao trabalhar com Laravel, o agente le `senior-mind://laravel-conventions` para aplicar convencoes corretas
+     - Ao discutir arquitetura, o agente le `senior-mind://clean-architecture` como referencia
+   - Resources disponiveis: `clean-code`, `clean-architecture`, `object-calisthenics`, `laravel-conventions`, `nestjs-patterns`, `tdd-reference`, `vue-patterns`, `react-patterns`
+
+   **2.2. Tools — Acoes que o agente executa**
+   - Tools sao **chamadas ativamente** pelo agente quando detecta que precisa executar uma analise ou gerar algo
+   - O agente decide sozinho qual tool usar com base no pedido do usuario
+   - Exemplos de uso real:
+     - Usuario: "Analise a arquitetura para um modulo de pagamentos" → agente chama `analyze_architecture`
+     - Usuario: "Revise este codigo" → agente chama `review_code` com o codigo
+     - Usuario: "Sugira refatoracoes para esta classe" → agente chama `suggest_refactoring`
+     - Usuario: "Me guie no TDD para criar um endpoint de usuarios" → agente chama `tdd_guide` com phase="red"
+     - Usuario: "Compare ORM vs SQL para esta query" → agente chama `compare_sql`
+     - Usuario: "Crie um plano de implementacao para esta feature" → agente chama `plan_implementation`
+     - Usuario: "ping" → agente chama `ping` para verificar se o MCP esta ativo
+   - Tools disponiveis: `ping`, `analyze_architecture`, `review_code`, `suggest_refactoring`, `tdd_guide`, `compare_sql`, `plan_implementation`
+
+   **2.3. Prompts — Templates reutilizaveis que o usuario invoca**
+   - Prompts sao **invocados explicitamente** pelo usuario (via menu de prompts no Cursor ou slash command no Claude)
+   - Diferente de tools, prompts geram um **template estruturado** que inicia uma conversa guiada
+   - No Cursor: acessiveis via aba "Prompts" no painel MCP ou digitando `/` no chat
+   - No Claude Desktop: acessiveis pelo icone de clip (anexar) → "Choose an integration"
+   - Exemplos de uso real:
+     - Usuario seleciona `code-review-backend`, preenche `code` e `framework: laravel` → recebe um checklist completo de review com secoes Clean Code, SOLID, convencoes Laravel e performance SQL
+     - Usuario seleciona `code-review-frontend`, preenche `code` e `framework: vue` → recebe checklist com Composition API, reatividade, componentizacao e performance
+     - Usuario seleciona `architecture-decision`, preenche `problem` → recebe um template ADR (Architecture Decision Record) para documentar a decisao
+     - Usuario seleciona `tdd-cycle`, preenche `feature` e `technology` → recebe um guia completo Red-Green-Refactor com checklists
+     - Usuario seleciona `implementation-plan`, preenche `feature` → recebe questionario de alinhamento + plano faseado com checklists
+     - Usuario seleciona `sql-analysis`, preenche `query` → recebe template de analise com EXPLAIN ANALYZE, indices, N+1 e otimizacoes
+   - Prompts disponiveis: `architecture-decision`, `tdd-cycle`, `code-review-backend`, `code-review-frontend`, `implementation-plan`, `sql-analysis`
+
+   **2.4. Fluxo tipico de uso combinado**
+   Exemplo de sessao real de trabalho com o agente:
+   ```
+   1. Usuario invoca prompt `implementation-plan` para "Modulo de autenticacao JWT"
+      → Recebe questionario + plano faseado
+   2. Usuario pede ao agente para analisar a arquitetura
+      → Agente chama tool `analyze_architecture` e le resource `clean-architecture`
+   3. Usuario documenta a decisao com prompt `architecture-decision`
+      → Recebe template ADR preenchido
+   4. Usuario inicia TDD com prompt `tdd-cycle` para a primeira fase
+      → Recebe guia Red-Green-Refactor
+   5. Durante o codigo, pede revisao
+      → Agente chama tool `review_code` (consultando resources de Clean Code e convencoes)
+   6. Apos implementar, pede sugestoes de refatoracao
+      → Agente chama tool `suggest_refactoring`
+   ```
+
+3. **Guia de Extensibilidade** (secao no README):
    - "Como adicionar uma nova Tool" - passo a passo com template
    - "Como adicionar um novo Resource" - passo a passo com template
    - "Como adicionar um novo Prompt" - passo a passo com template
    - Convencoes de nomenclatura e organizacao
    - Exemplo completo de cada tipo
 
-3. **Integracao Context7**: Secao explicando como usar o Context7 MCP em conjunto para:
+4. **Integracao Context7**: Secao explicando como usar o Context7 MCP em conjunto para:
    - Memoria de longo prazo das decisoes tomadas
    - Busca de documentacao de frameworks
 
-4. **Configuracao Cursor**: Instruir como adicionar ao `.cursor/mcp.json`:
+5. **Configuracao Cursor**: Instruir como adicionar ao `.cursor/mcp.json`:
 
 ```json
 {
@@ -749,7 +809,7 @@ Ou para uso direto (sem Docker):
 }
 ```
 
-5. **Nota sobre observabilidade**: Registrar no README que logs e configs de K8s NAO sao incluidos por padrao (apenas sob solicitacao explicita)
+6. **Nota sobre observabilidade**: Registrar no README que logs e configs de K8s NAO sao incluidos por padrao (apenas sob solicitacao explicita)
 
 **Criterio de conclusao**: README completo, projeto configurado no Cursor e funcionando end-to-end.
 
