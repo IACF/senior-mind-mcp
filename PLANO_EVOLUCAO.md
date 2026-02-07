@@ -300,7 +300,7 @@ GoF no contexto Clean Architecture:
 
 ---
 
-## FASE 6: Novas Tools
+## FASE 6: Novas Tools (Concluida)
 
 **Arquivos:** `src/tools/detect-code-smells.ts`, `src/tools/validate-architecture.ts`, `src/tools/explain-principle.ts`, `src/tools/index.ts`, testes correspondentes
 
