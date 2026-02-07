@@ -154,7 +154,7 @@ Prompt `mentor-mode` que instrui o agente a NAO escrever codigo final ate comple
 
 ---
 
-## FASE 2: Expandir Resources de Clean Code
+## FASE 2: Expandir Resources de Clean Code (Concluida)
 
 **Arquivos:** `src/resources/clean-code.ts` (expandir), `src/resources/clean-code-smells.ts` (novo), `src/resources/solid-principles.ts` (novo), `src/resources/index.ts`, `tests/resources/clean-code-advanced.test.ts`
 

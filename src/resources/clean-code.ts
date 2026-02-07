@@ -58,11 +58,40 @@ function processUser(user: User): void {
 - Duplicacao e a raiz de muitos problemas de manutencao.
 - Extraia logica repetida em funcoes, classes ou modulos reutilizaveis.
 
-## 4. KISS (Keep It Simple, Stupid)
+### Exemplo 1 - Extrair funcao:
+\`\`\`typescript
+// Antes: duplicacao
+function formatOrderA(o: Order) {
+  return o.items.map(i => i.price * 1.1).reduce((a, b) => a + b, 0).toFixed(2);
+}
+function formatOrderB(o: Order) {
+  return o.items.map(i => i.price * 1.1).reduce((a, b) => a + b, 0).toFixed(2);
+}
+// Depois: extrair funcao reutilizavel
+function totalWithTax(items: Item[], rate = 1.1): number {
+  return items.map(i => i.price * rate).reduce((a, b) => a + b, 0);
+}
+\`\`\`
+
+### Exemplo 2 - Extrair modulo:
+\`\`\`typescript
+// Antes: mesma logica em varios arquivos. Depois: modulo \`formatters/currency.ts\`
+// export function formatBRL(value: number): string { ... }
+// Um unico lugar para alterar regras de formatacao.
+\`\`\`
+
+## 4. KISS (Keep It Simple, Stupid) e YAGNI
 
 - A simplicidade e a sofisticacao suprema.
 - Prefira solucoes simples e diretas.
 - Nao adicione complexidade desnecessaria "para o futuro" (YAGNI - You Aren't Gonna Need It).
+- Over-engineering: camadas, interfaces e abstracoes antes de ter necessidade real.
+
+### Exemplo - Over-engineering vs simplicidade:
+\`\`\`typescript
+// Evite: 5 interfaces e 3 classes para um CRUD que so lista e salva
+// Prefira: uma funcao ou classe que faz o necessario ate surgir variacao real.
+\`\`\`
 
 ## 5. Principios SOLID
 
@@ -84,6 +113,44 @@ function processUser(user: User): void {
 ### DIP - Dependency Inversion Principle
 - Modulos de alto nivel nao devem depender de modulos de baixo nivel. Ambos devem depender de abstracoes.
 - Abstracoes nao devem depender de detalhes. Detalhes devem depender de abstracoes.
+
+## 5b. Classes
+
+- Classes devem ter coesao alta: metodos e atributos pertencem ao mesmo conceito.
+- Mantenha classes pequenas: tamanho e numero de responsabilidades limitados.
+- SRP aplicado a classes: uma classe, um motivo para mudar; se a classe faz mais de uma coisa, divida.
+
+## 5c. Boundaries (Fronteiras)
+
+- Encapsule APIs externas: nao deixe detalhes de terceiros vazarem para o nucleo.
+- Use Adapter ou Facade para wrapping de APIs externas: seu codigo depende da sua interface, nao do SDK.
+- Facilita testes (mock da interface) e troca de provedor sem quebrar dominio.
+
+### Exemplo:
+\`\`\`typescript
+// Em vez de chamar Stripe/API externa direto no Use Case, dependa de IPaymentGateway.
+// A implementacao (Adapter) traduz entre seu dominio e a API externa.
+\`\`\`
+
+## 5d. Niveis de Abstracao
+
+- Cada funcao deve operar em um unico nivel de abstracao.
+- Step-down rule: leia o codigo de cima para baixo como um texto; os detalhes descem para funcoes chamadas.
+- Misturar niveis (ex.: chamada HTTP ao lado de \`if (x > 0)\`) confunde e dificulta leitura.
+
+## 5e. Command Query Separation (CQS)
+
+- Uma funcao ou retorna um valor (Query) ou altera estado (Command), nao os dois.
+- Queries nao devem ter efeitos colaterais; Commands nao precisam retornar valor de negocio.
+- Facilita raciocinio e testes: quem so le (retornam dados) nao alteram estado; quem altera estado e explicito.
+
+## 5f. Emergence (Kent Beck - design simples)
+
+Kent Beck propoe quatro regras para design simples:
+1. Passa todos os testes.
+2. Revela intencao (nomes e estrutura comunicam).
+3. Sem duplicacao (DRY).
+4. Minimo de elementos (menos classes/metodos possivel sem violar 1-3).
 
 ## 6. Formatacao e Comentarios
 
@@ -112,8 +179,9 @@ const timeout = 30000;
 ## 7. Tratamento de Erros
 
 - Use excecoes em vez de codigos de retorno de erro.
-- Crie classes de excecao especificas para o dominio.
-- Nao retorne \`null\` — use Optional/Maybe, excecoes ou valores default.
+- Crie classes de excecao especificas para o dominio (excecoes de dominio).
+- Prefira Result pattern (Result/Ok/Err) em fluxos onde excecoes nao forem idiomaticas.
+- Nao retorne \`null\` — use Optional/Maybe, excecoes ou valores default; evite sem null no nucleo do dominio.
 - Nao passe \`null\` como argumento.
 
 ## 8. Testes Limpos
@@ -121,7 +189,14 @@ const timeout = 30000;
 - Testes devem ser tao limpos quanto o codigo de producao.
 - Siga o padrao AAA: Arrange, Act, Assert.
 - Um assert por teste (quando possivel).
-- Testes devem ser rapidos, independentes, repetitivos, auto-validaveis e escritos em tempo habil (F.I.R.S.T.).
+- F.I.R.S.T.: Fast (rapidos), Independent (independentes), Repeatable (repetitivos), Self-validating (auto-validaveis), Timely (escritos em tempo habil).
+
+### F.I.R.S.T. com exemplos:
+- **Fast**: testes que batem em banco/API sem mock sao lentos; use doubles.
+- **Independent**: nao dependa de ordem; cada teste prepara seu proprio dado.
+- **Repeatable**: mesmo resultado em qualquer ambiente.
+- **Self-validating**: passam ou falham, sem inspecao manual.
+- **Timely**: escreva o teste antes ou junto do codigo (TDD).
 `;
 
 export function register(server: McpServer): void {

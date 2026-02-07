@@ -1,0 +1,18 @@
+---
+description: Usar Senior Mind MCP para arquitetura, revisão, TDD e refatoração
+alwaysApply: true
+---
+
+# Usar Senior Mind MCP
+
+Sempre que for relevante para a tarefa, **use as ferramentas do MCP Senior Mind** antes ou durante a implementação:
+
+- **Arquitetura / decisões de design** → `analyze_architecture` (problem, technology, context)
+- **Revisão de código** (Clean Code / Object Calisthenics) → `review_code` (code, language, focus)
+- **Sugestões de refatoração** (Object Calisthenics) → `suggest_refactoring` (code, language, rules)
+- **Ciclo TDD** (Red-Green-Refactor) → `tdd_guide` (feature, phase, technology, code, test_code)
+- **Plano de implementação faseado** → `plan_implementation` (feature, technology, requirements)
+- **Comparação ORM vs SQL** → `compare_sql` (description, technology, tables, context)
+- **Testar conexão** → `ping`
+
+Regra: ao trabalhar em features que envolvam arquitetura, testes, refatoração ou planejamento, **invocar o Senior Mind MCP** no início ou no decorrer da conversa, em vez de apenas seguir apenas o contexto do chat.
