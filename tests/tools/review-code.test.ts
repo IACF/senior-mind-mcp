@@ -156,4 +156,128 @@ describe("tool review_code", () => {
 
     expect(text).toContain("Um ponto por linha");
   });
+
+  it("deve detectar magic number (Fase 4)", async () => {
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: "const timeout = 5000;\nconst retries = 3;",
+        language: "typescript",
+        focus: "clean-code",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toContain("Magic Numbers");
+  });
+
+  it("deve detectar argumento booleano / flag (Fase 4)", async () => {
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: "function fetchData(verbose: boolean) { return null; }",
+        language: "typescript",
+        focus: "clean-code",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Evitar Argumentos Booleanos|Flag|booleanos?/i);
+  });
+
+  it("deve detectar God class - muitos metodos (Fase 4)", async () => {
+    const methods = Array.from({ length: 12 }, (_, i) => `  m${i}() { return 0; }`).join("\n");
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: `class BigService {\n${methods}\n}`,
+        language: "typescript",
+        focus: "clean-code",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toContain("God Class");
+  });
+
+  it("deve detectar funcao sem tipo de retorno explicito (Fase 4)", async () => {
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: "function getId() { return 1; }",
+        language: "typescript",
+        focus: "clean-code",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Tipos de Retorno|retorno explicito/i);
+  });
+
+  it("deve detectar nome generico data/info/manager (Fase 4)", async () => {
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: "const data = fetchUsers();\nconst info = getConfig();",
+        language: "typescript",
+        focus: "clean-code",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/generico|data|info|Nomes Significativos/i);
+  });
+
+  it("deve detectar retorno de null (Fase 4)", async () => {
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: "function find(): User { return null; }",
+        language: "typescript",
+        focus: "clean-code",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Retorno de null|Evitar Retorno/i);
+  });
+
+  it("deve detectar Regra 4 - colecao exposta como array (Fase 4)", async () => {
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: "function process(items: string[]) { return items.length; }",
+        language: "typescript",
+        focus: "object-calisthenics",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Regra 4|Colecoes|primeira classe/i);
+  });
+
+  it("deve detectar Regra 7 - classe com mais de 50 linhas (Fase 4)", async () => {
+    const filler = Array.from({ length: 52 }, (_, i) => `  line${i}() { }`).join("\n");
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: `class Huge {\n${filler}\n}`,
+        language: "typescript",
+        focus: "object-calisthenics",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Regra 7|50 linhas|Classe pequena/i);
+  });
+
+  it("deve detectar Regra 8 - classe com mais de 2 variaveis de instancia (Fase 4)", async () => {
+    const result = await client.callTool({
+      name: "review_code",
+      arguments: {
+        code: `class TooManyFields {
+  private a: string = "";
+  private b: number = 0;
+  private c: boolean = false;
+  method() { return this.a; }
+}`,
+        language: "typescript",
+        focus: "object-calisthenics",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Regra 8|variaveis de instancia|Maximo 2/i);
+  });
 });

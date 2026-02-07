@@ -252,7 +252,7 @@ GoF no contexto Clean Architecture:
 
 ---
 
-## FASE 4: Melhorar Tool `review_code`
+## FASE 4: Melhorar Tool `review_code` (Concluida)
 
 **Arquivos:** `src/tools/review-code.ts`, `tests/tools/review-code.test.ts`
 

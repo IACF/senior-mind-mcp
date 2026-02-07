@@ -169,6 +169,148 @@ function detectCleanCodeViolations(
     }
   }
 
+  // Magic numbers (exceto 0, 1, -1) — uma violacao por linha para evitar ruido
+  const magicNumberPattern = /\b(?:[2-9]\d*|\d{2,}|-\s*[2-9]\d*|-\s*\d{2,})\b/g;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim().startsWith("//") || line.trim().startsWith("*")) continue;
+    const match = magicNumberPattern.exec(line);
+    magicNumberPattern.lastIndex = 0;
+    if (match) {
+      const num = match[0].replace(/\s/g, "");
+      if (num !== "0" && num !== "1" && num !== "-1") {
+        violations.push({
+          principle: "Sem Magic Numbers",
+          category: "clean-code",
+          severity: "media",
+          location: `Linha ${i + 1} (valor ${num})`,
+          description: `Numero literal '${num}' sem constante nomeada. Dificulta manutencao e significado.`,
+          suggestion: `Extraia para uma constante ou variavel com nome descritivo (ex.: MAX_RETRIES, TIMEOUT_MS).`,
+        });
+      }
+    }
+  }
+
+  // Boolean/flag arguments
+  const boolParamPattern =
+    /(?:function|async function)\s*\w*\s*\([^)]*\b(flag|enabled|verbose|strict|force|skip)\s*(?::\s*bool(ean)?\s*)?[,)]/gi;
+  for (let i = 0; i < lines.length; i++) {
+    if (boolParamPattern.test(lines[i])) {
+      violations.push({
+        principle: "Evitar Argumentos Booleanos (Flag)",
+        category: "clean-code",
+        severity: "media",
+        location: `Linha ${i + 1}`,
+        description: `Parametro booleano que altera comportamento da funcao detectado.`,
+        suggestion: `Prefira duas funcoes com nomes claros ou um objeto de opcoes em vez de um parametro booleano.`,
+      });
+    }
+    boolParamPattern.lastIndex = 0;
+  }
+
+  // God class: mais de 200 linhas ou mais de 10 metodos
+  let inClass = false;
+  let classStart = -1;
+  let classBraceDepth = 0;
+  let methodCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*class\s+\w+/.test(line)) {
+      inClass = true;
+      classStart = i;
+      classBraceDepth = 0;
+      methodCount = 0;
+    }
+    if (inClass) {
+      classBraceDepth += (line.match(/{/g) || []).length;
+      classBraceDepth -= (line.match(/}/g) || []).length;
+      if (
+        /^\s*(?:async\s+)?(?:public|private|protected)?\s*(?:async\s+)?\w+\s*\([^)]*\)\s*(?::\s*\w+)?\s*[{\{]/.test(
+          line
+        ) ||
+        /^\s*(?:get|set)\s+\w+/.test(line)
+      ) {
+        methodCount++;
+      }
+      if (classBraceDepth <= 0 && classStart >= 0) {
+        const classLines = i - classStart + 1;
+        if (classLines > 200) {
+          violations.push({
+            principle: "God Class (classe muito longa)",
+            category: "clean-code",
+            severity: "alta",
+            location: `Linhas ${classStart + 1}-${i + 1} (${classLines} linhas)`,
+            description: `Classe com ${classLines} linhas. Classes devem ser pequenas e coesas.`,
+            suggestion: `Extraia responsabilidades em classes menores (SRP). Considere composicao.`,
+          });
+        }
+        if (methodCount > 10) {
+          violations.push({
+            principle: "God Class (muitos metodos)",
+            category: "clean-code",
+            severity: "alta",
+            location: `Linhas ${classStart + 1}-${i + 1} (${methodCount} metodos)`,
+            description: `Classe com ${methodCount} metodos. Indica excesso de responsabilidades.`,
+            suggestion: `Divida a classe em classes menores com responsabilidade unica (SRP).`,
+          });
+        }
+        inClass = false;
+      }
+    }
+  }
+
+  // Missing return types (TypeScript/JavaScript)
+  if (["typescript", "javascript", "vue", "react"].includes(language)) {
+    const noReturnType =
+      /(?:function|async function)\s+(\w+)\s*\([^)]*\)\s*(?!\s*:)\s*\{/;
+    for (let i = 0; i < lines.length; i++) {
+      const match = lines[i].match(noReturnType);
+      if (match && !lines[i].trim().startsWith("//")) {
+        violations.push({
+          principle: "Tipos de Retorno Explicitos",
+          category: "clean-code",
+          severity: "media",
+          location: `Linha ${i + 1} (funcao '${match[1]}')`,
+          description: `Funcao '${match[1]}' sem tipo de retorno explicito.`,
+          suggestion: `Adicione o tipo de retorno (ex.: : Promise<void>, : number) para melhor documentacao e type safety.`,
+        });
+      }
+    }
+  }
+
+  // Nomes genericos: data, info, temp, manager, processor, helper, utils
+  const genericNamePattern =
+    /\b(const|let|var|function\s+\w*\([^)]*)\s+(data|info|temp|manager|processor|helper|utils)\b/g;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().startsWith("//")) continue;
+    let match;
+    while ((match = genericNamePattern.exec(lines[i])) !== null) {
+      violations.push({
+        principle: "Nomes Significativos (evitar genericos)",
+        category: "clean-code",
+        severity: "media",
+        location: `Linha ${i + 1} ('${match[2]}')`,
+        description: `Nome generico '${match[2]}' pouco descritivo.`,
+        suggestion: `Use um nome que revele o proposito (ex.: userList, orderTotal, configMap).`,
+      });
+    }
+    genericNamePattern.lastIndex = 0;
+  }
+
+  // Retorno de null
+  for (let i = 0; i < lines.length; i++) {
+    if (/return\s+null\s*;/.test(lines[i]) && !lines[i].trim().startsWith("//")) {
+      violations.push({
+        principle: "Evitar Retorno de null",
+        category: "clean-code",
+        severity: "media",
+        location: `Linha ${i + 1}`,
+        description: `Retorno de null detectado. Pode causar NullPointerException e codigo defensivo excessivo.`,
+        suggestion: `Prefira Optional/Maybe, lancar excecao ou retornar objeto vazio conforme o dominio.`,
+      });
+    }
+  }
+
   return violations;
 }
 
@@ -282,6 +424,96 @@ function detectCalisthenicsViolations(
       });
     }
     abbreviationPattern.lastIndex = 0;
+  }
+
+  // Regra 4: Colecoes em primeira classe (evitar array/lista exposta sem classe propria)
+  const collectionPattern =
+    /\b(items|list|array|collection)\s*:\s*(?:\w+\[\]|Array\s*<[\w\s,]+>)/g;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim().startsWith("//")) continue;
+    let match;
+    while ((match = collectionPattern.exec(lines[i])) !== null) {
+      violations.push({
+        principle: "Regra 4: Colecoes em primeira classe",
+        category: "object-calisthenics",
+        severity: "media",
+        location: `Linha ${i + 1} ('${match[1]}')`,
+        description: `Colecao '${match[1]}' exposta como array/lista. Prefira uma classe que encapsule a colecao.`,
+        suggestion: `Crie uma classe (ex.: OrderItems, UserList) que encapsule a colecao e exponha comportamento em vez do array cru.`,
+      });
+    }
+    collectionPattern.lastIndex = 0;
+  }
+
+  // Regra 7: Classe com mais de 50 linhas
+  let ocInClass = false;
+  let ocClassStart = -1;
+  let ocClassDepth = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*class\s+\w+/.test(line)) {
+      ocInClass = true;
+      ocClassStart = i;
+      ocClassDepth = 0;
+    }
+    if (ocInClass) {
+      ocClassDepth += (line.match(/{/g) || []).length;
+      ocClassDepth -= (line.match(/}/g) || []).length;
+      if (ocClassDepth <= 0 && ocClassStart >= 0) {
+        const classLines = i - ocClassStart + 1;
+        if (classLines > 50) {
+          violations.push({
+            principle: "Regra 7: Classe pequena (max 50 linhas)",
+            category: "object-calisthenics",
+            severity: "media",
+            location: `Linhas ${ocClassStart + 1}-${i + 1} (${classLines} linhas)`,
+            description: `Classe com ${classLines} linhas. Object Calisthenics: maximo 50 linhas por classe.`,
+            suggestion: `Extraia responsabilidades em classes menores.`,
+          });
+        }
+        ocInClass = false;
+      }
+    }
+  }
+
+  // Regra 8: Classe com mais de 2 variaveis de instancia
+  ocInClass = false;
+  ocClassStart = -1;
+  ocClassDepth = 0;
+  let instanceVarCount = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^\s*class\s+\w+/.test(line)) {
+      ocInClass = true;
+      ocClassStart = i;
+      ocClassDepth = 0;
+      instanceVarCount = 0;
+    }
+    if (ocInClass) {
+      ocClassDepth += (line.match(/{/g) || []).length;
+      ocClassDepth -= (line.match(/}/g) || []).length;
+      if (
+        /^\s*(?:readonly\s+)?(?:public|private|protected)\s+(?:readonly\s+)?\w+(\s*:\s*[\w<>\[\]]+)?\s*[;=]/.test(
+          line
+        ) ||
+        /^\s*(?:private|protected|public)\s+\$\w+/.test(line)
+      ) {
+        instanceVarCount++;
+      }
+      if (ocClassDepth <= 0 && ocClassStart >= 0) {
+        if (instanceVarCount > 2) {
+          violations.push({
+            principle: "Regra 8: Maximo 2 variaveis de instancia",
+            category: "object-calisthenics",
+            severity: "media",
+            location: `Linhas ${ocClassStart + 1}-${i + 1} (${instanceVarCount} variaveis)`,
+            description: `Classe com ${instanceVarCount} variaveis de instancia. Object Calisthenics: maximo 2.`,
+            suggestion: `Agrupe variaveis em objetos de valor ou extraia em classes relacionadas.`,
+          });
+        }
+        ocInClass = false;
+      }
+    }
   }
 
   // Regra 9: Sem getters/setters
