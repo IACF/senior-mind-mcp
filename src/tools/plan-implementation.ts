@@ -5,6 +5,121 @@ import { config } from "../config.js";
 const technologyEnum = z.enum(["laravel", "nestjs"]);
 type Technology = z.infer<typeof technologyEnum>;
 
+type AgentLevel = "rapido" | "avancado" | "misto";
+
+interface AgentRecommendation {
+  level: AgentLevel;
+  justification: string;
+  usageTip: string;
+}
+
+const PHASE_AGENT_RECOMMENDATIONS: Record<number, Omit<AgentRecommendation, "usageTip"> & { usageTip: (tech: Technology) => string }> = {
+  1: {
+    level: "avancado",
+    justification: "Requer decisoes de dominio, definir atributos e relacionamentos.",
+    usageTip: (tech) =>
+      tech === "laravel"
+        ? "Peça para definir o Model, a migration e os relacionamentos com base nas regras de negocio."
+        : "Peça para definir a entidade, o module e os DTOs com base nas regras de negocio.",
+  },
+  2: {
+    level: "rapido",
+    justification: "Boilerplate previsivel: interface + implementacao padrao.",
+    usageTip: (tech) =>
+      tech === "laravel"
+        ? "Peça para gerar o Repository (interface + Eloquent) com base no modelo definido."
+        : "Peça para gerar o Repository (interface + implementacao) com base na entidade definida.",
+  },
+  3: {
+    level: "avancado",
+    justification: "Logica de negocio, cenarios de teste e decisoes de design.",
+    usageTip: () =>
+      "Peça para escrever os testes primeiro (TDD) e depois implementar o Service/Use Case.",
+  },
+  4: {
+    level: "rapido",
+    justification: "Controller fino, DTOs e rotas — padrao mecanico.",
+    usageTip: (tech) =>
+      tech === "laravel"
+        ? "Peça para criar o Controller, FormRequests e registrar rotas em api.php."
+        : "Peça para criar o Controller, DTOs e registrar rotas no module.",
+  },
+  5: {
+    level: "misto",
+    justification: "Paginacao/filtros (rapido); cache e performance (avancado).",
+    usageTip: () =>
+      "Para paginacao e filtros use modelo rapido; para cache/otimizacao use modelo avancado.",
+  },
+};
+
+function getAgentRecommendation(
+  phaseNumber: number,
+  technology: Technology,
+  teamContext?: string
+): AgentRecommendation {
+  const base = PHASE_AGENT_RECOMMENDATIONS[phaseNumber];
+  if (!base) {
+    return {
+      level: "avancado",
+      justification: "Fase nao mapeada; use modelo avancado por seguranca.",
+      usageTip: "Peça para implementar a fase com cuidado aos requisitos.",
+    };
+  }
+  const usageTip = typeof base.usageTip === "function" ? base.usageTip(technology) : base.usageTip;
+  let level = base.level;
+  const isJunior =
+    teamContext &&
+    /junior|iniciante|iniciantes|júnior|juniors|equipe pequena|pouca experiencia/i.test(
+      teamContext
+    );
+  if (isJunior && (level === "rapido" || level === "misto")) {
+    level = level === "misto" ? "avancado" : "avancado";
+  }
+  return {
+    level: level as AgentLevel,
+    justification: base.justification,
+    usageTip,
+  };
+}
+
+function formatAgentSection(
+  phaseNumber: number,
+  technology: Technology,
+  teamContext?: string
+): string {
+  const rec = getAgentRecommendation(phaseNumber, technology, teamContext);
+  let out = `**Agente de IA recomendado**\n`;
+  out += `- **Nivel do modelo**: ${rec.level}\n`;
+  out += `- **Justificativa**: ${rec.justification}\n`;
+  out += `- **Dica de uso**: ${rec.usageTip}\n\n`;
+  return out;
+}
+
+function generateAgentSummaryTable(
+  technology: Technology,
+  teamContext?: string
+): string {
+  const rows: string[] = [];
+  for (let p = 1; p <= 5; p++) {
+    const rec = getAgentRecommendation(p, technology, teamContext);
+    const phaseNames = [
+      "1. Entidades",
+      "2. Repository",
+      "3. Service/TDD",
+      "4. API",
+      "5. Refinamentos",
+    ];
+    rows.push(`| ${phaseNames[p - 1]} | ${rec.level} | ${rec.justification} |`);
+  }
+  return (
+    `## Recomendacao de Agente por Fase\n\n` +
+    `| Fase | Agente Recomendado | Justificativa |\n` +
+    `|---|---|---|\n` +
+    rows.join("\n") +
+    `\n\n`
+  );
+}
+
 function generateAlignmentQuestions(
   feature: string,
   technology: Technology,
@@ -66,16 +181,20 @@ function generateAlignmentQuestions(
     );
   }
 
+  questions.push(
+    `Qual IDE/agente de IA voce esta usando? (Cursor, Claude Desktop, Copilot, outro) — para adaptar as dicas de uso por fase.`
+  );
+
   return questions;
 }
 
 function generateImplementationPlan(
   feature: string,
   technology: Technology,
-  requirements?: string
+  requirements?: string,
+  teamContext?: string
 ): string {
   const techLabel = technology === "laravel" ? "Laravel" : "NestJS";
-  const lang = technology === "laravel" ? "php" : "typescript";
 
   let plan = `## Plano de Implementacao Faseado\n\n`;
 
@@ -98,6 +217,7 @@ function generateImplementationPlan(
   plan += `**Testes**:\n`;
   plan += `- Testes unitarios para validacoes da entidade\n`;
   plan += `- Testes para factory/fixtures\n\n`;
+  plan += formatAgentSection(1, technology, teamContext);
 
   // Fase 2: Repository / Acesso a Dados
   plan += `### Fase 2: Acesso a Dados (Repository)\n\n`;
@@ -114,6 +234,7 @@ function generateImplementationPlan(
 
   plan += `**Testes**:\n`;
   plan += `- Testes de integracao com banco (factory + repository)\n\n`;
+  plan += formatAgentSection(2, technology, teamContext);
 
   // Fase 3: Service / Logica de Negocio
   plan += `### Fase 3: Logica de Negocio (Service)\n\n`;
@@ -137,6 +258,7 @@ function generateImplementationPlan(
   plan += `**Testes**:\n`;
   plan += `- Testes unitarios com mocks do Repository\n`;
   plan += `- Cobrir: criacao, leitura, atualizacao, exclusao (se aplicavel)\n\n`;
+  plan += formatAgentSection(3, technology, teamContext);
 
   // Fase 4: Controller / API
   plan += `### Fase 4: API / Controller\n\n`;
@@ -161,6 +283,7 @@ function generateImplementationPlan(
   plan += `- Testes de integracao (HTTP) para cada endpoint\n`;
   plan += `- Testar validacao de entrada (dados invalidos)\n`;
   plan += `- Testar autorizacao (se aplicavel)\n\n`;
+  plan += formatAgentSection(4, technology, teamContext);
 
   // Fase 5: Refinamentos
   plan += `### Fase 5: Refinamentos e Integracao\n\n`;
@@ -171,10 +294,13 @@ function generateImplementationPlan(
   plan += `- [ ] Implementar cache (se necessario)\n`;
   plan += `- [ ] Adicionar logs estruturados\n`;
   plan += `- [ ] Revisar indices de banco de dados\n`;
-  plan += `- [ ] Documentar API (Swagger/OpenAPI)\n`;
+  plan += `- [ ] Documentar API (Swagger/OpenAPI)\n\n`;
+  plan += formatAgentSection(5, technology, teamContext);
+
+  plan += generateAgentSummaryTable(technology, teamContext);
 
   if (requirements) {
-    plan += `\n\n### Requisitos ja informados\n\n`;
+    plan += `### Requisitos ja informados\n\n`;
     plan += `${requirements}\n`;
   }
 
@@ -250,14 +376,25 @@ export function register(server: McpServer): void {
         .string()
         .optional()
         .describe("Requisitos ja conhecidos"),
+      team_context: z
+        .string()
+        .optional()
+        .describe(
+          "Contexto da equipe: nivel de experiencia, ferramentas de IA disponiveis (ex.: equipe junior pode precisar de modelo avancado em mais fases)"
+        ),
     },
-    async ({ feature, technology, requirements }) => {
+    async ({ feature, technology, requirements, team_context }) => {
       const questions = generateAlignmentQuestions(
         feature,
         technology,
         requirements
       );
-      const plan = generateImplementationPlan(feature, technology, requirements);
+      const plan = generateImplementationPlan(
+        feature,
+        technology,
+        requirements,
+        team_context
+      );
       const text = formatOutput(
         feature,
         technology,

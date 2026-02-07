@@ -176,4 +176,74 @@ describe("tool plan_implementation", () => {
     expect(text).toContain("Ordem de Execucao");
     expect(text).toContain("independente");
   });
+
+  it("deve incluir recomendacao de agente de IA em cada fase (Fase 7)", async () => {
+    const result = await client.callTool({
+      name: "plan_implementation",
+      arguments: {
+        feature: "CRUD de pedidos",
+        technology: "nestjs",
+      },
+    });
+
+    const text = (result.content as Array<{ type: string; text: string }>)[0]
+      .text;
+
+    expect(text).toContain("Agente de IA recomendado");
+    expect(text).toMatch(/Nivel do modelo|rapido|avancado/);
+    expect(text).toContain("Justificativa");
+    expect(text).toContain("Dica de uso");
+  });
+
+  it("deve incluir tabela resumo de agente por fase (Fase 7)", async () => {
+    const result = await client.callTool({
+      name: "plan_implementation",
+      arguments: {
+        feature: "Modulo de usuarios",
+        technology: "laravel",
+      },
+    });
+
+    const text = (result.content as Array<{ type: string; text: string }>)[0]
+      .text;
+
+    expect(text).toContain("Recomendacao de Agente por Fase");
+    expect(text).toMatch(/\|\s*1\. Entidades\s*\|/);
+    expect(text).toMatch(/\|\s*2\. Repository\s*\|/);
+    expect(text).toMatch(/\|\s*3\. Service\/TDD\s*\|/);
+    expect(text).toMatch(/\|\s*4\. API\s*\|/);
+    expect(text).toMatch(/\|\s*5\. Refinamentos\s*\|/);
+  });
+
+  it("deve incluir pergunta sobre IDE/agente de IA (Fase 7)", async () => {
+    const result = await client.callTool({
+      name: "plan_implementation",
+      arguments: {
+        feature: "API de relatorios",
+        technology: "nestjs",
+      },
+    });
+
+    const text = (result.content as Array<{ type: string; text: string }>)[0]
+      .text;
+
+    expect(text).toMatch(/IDE|agente de IA|Cursor|Claude|Copilot/);
+  });
+
+  it("deve aceitar team_context e incluir no plano (Fase 7)", async () => {
+    const result = await client.callTool({
+      name: "plan_implementation",
+      arguments: {
+        feature: "Gestao de estoque",
+        technology: "laravel",
+        team_context: "Equipe junior, 2 devs, usando Cursor",
+      },
+    });
+
+    const text = (result.content as Array<{ type: string; text: string }>)[0]
+      .text;
+
+    expect(text).toContain("Agente de IA recomendado");
+    expect(text).toContain("Recomendacao de Agente por Fase");
+  });
 });

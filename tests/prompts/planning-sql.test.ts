@@ -100,6 +100,61 @@ describe("Prompts - Planejamento e SQL", () => {
       expect(text).toContain("Ordem de Execucao");
       expect(text).toContain("independente");
     });
+
+    it("deve conter pergunta sobre IDE/agente de IA (Fase 7)", async () => {
+      const result = await client.getPrompt({
+        name: "implementation-plan",
+        arguments: {
+          feature: "API de metricas",
+        },
+      });
+
+      const text = result.messages[0].content.text as string;
+
+      expect(text).toMatch(/IDE|agente de IA|Cursor|Claude|Copilot/);
+    });
+
+    it("deve conter tabela Recomendacao de Agente por Fase (Fase 7)", async () => {
+      const result = await client.getPrompt({
+        name: "implementation-plan",
+        arguments: {
+          feature: "Modulo de auditoria",
+        },
+      });
+
+      const text = result.messages[0].content.text as string;
+
+      expect(text).toContain("Recomendacao de Agente por Fase");
+      expect(text).toMatch(/\|\s*1\. Entidades\s*\|/);
+      expect(text).toMatch(/\|\s*5\. Refinamentos\s*\|/);
+    });
+
+    it("deve incluir indicacao de agente (Avancado/Rapido) em cada fase (Fase 7)", async () => {
+      const result = await client.getPrompt({
+        name: "implementation-plan",
+        arguments: {
+          feature: "Sistema de logs",
+        },
+      });
+
+      const text = result.messages[0].content.text as string;
+
+      expect(text).toMatch(/Agente:\s*Avancado|Agente:\s*Rapido|Agente:\s*Misto/);
+    });
+
+    it("deve incluir team_context quando fornecido (Fase 7)", async () => {
+      const result = await client.getPrompt({
+        name: "implementation-plan",
+        arguments: {
+          feature: "Cache distribuido",
+          team_context: "Equipe senior, 5 devs",
+        },
+      });
+
+      const text = result.messages[0].content.text as string;
+
+      expect(text).toContain("Equipe senior, 5 devs");
+    });
   });
 
   describe("sql-analysis", () => {
