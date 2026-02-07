@@ -5,12 +5,157 @@ import { config } from "../config.js";
 const technologyEnum = z.enum(["laravel", "nestjs", "generic"]);
 type Technology = z.infer<typeof technologyEnum>;
 
+type ProblemType = "api" | "batch" | "evento" | "crud" | "generico";
+
 interface ArchitectureOption {
   name: string;
   description: string;
   pros: string[];
   cons: string[];
   principles: string[];
+  tradeOff?: string;
+}
+
+function detectProblemType(
+  problem: string,
+  context: string | undefined
+): ProblemType {
+  const combined = `${problem} ${context ?? ""}`.toLowerCase();
+  if (
+    /api\s+(rest|restful|endpoint)|endpoint|rotas?\s+http|controller\s+(api|http)/i.test(
+      combined
+    ) ||
+    combined.includes("api ") ||
+    combined.includes(" api")
+  ) {
+    return "api";
+  }
+  if (
+    combined.includes("batch") ||
+    combined.includes("job") ||
+    combined.includes("cron") ||
+    combined.includes("processamento em lote") ||
+    combined.includes("fila")
+  ) {
+    return "batch";
+  }
+  if (
+    combined.includes("evento") ||
+    combined.includes("event-driven") ||
+    combined.includes("mensageria") ||
+    combined.includes("publish") ||
+    combined.includes("subscribe") ||
+    combined.includes("domain events")
+  ) {
+    return "evento";
+  }
+  if (
+    combined.includes("crud") ||
+    combined.includes("abm") ||
+    combined.includes("cadastro simples") ||
+    /create\s*(read|update|delete)|(read|update|delete)\s*create/i.test(
+      combined
+    )
+  ) {
+    return "crud";
+  }
+  return "generico";
+}
+
+function getFolderStructure(
+  technology: Technology,
+  problemType: ProblemType
+): string {
+  if (technology === "nestjs") {
+    const base = `src/
+  modules/
+    <dominio>/
+      <dominio>.module.ts
+      application/
+        use-cases/
+      domain/
+        entities/
+      infrastructure/
+        controllers/
+        persistence/`;
+    if (problemType === "api") {
+      return `src/
+  modules/
+    <dominio>/
+      <dominio>.module.ts
+      application/
+      domain/
+      infrastructure/
+        controllers/
+        dto/
+        persistence/`;
+    }
+    if (problemType === "batch") {
+      return `src/
+  modules/
+    <dominio>/
+      jobs/
+      application/
+      domain/
+      infrastructure/
+        persistence/`;
+    }
+    if (problemType === "evento") {
+      return `src/
+  modules/
+    <dominio>/
+      application/
+        handlers/
+      domain/
+        events/
+      infrastructure/
+        publishers/
+        subscribers/`;
+    }
+    return base;
+  }
+  if (technology === "laravel") {
+    const base = `app/
+  Domain/
+    <Dominio>/
+      Entities/
+  Application/
+    UseCases/
+  Infrastructure/
+    Http/
+      Controllers/
+    Persistence/`;
+    if (problemType === "api") {
+      return `app/
+  Http/
+    Controllers/
+      Api/
+  Services/
+  Repositories/
+  Resources/  (API Resources)
+routes/
+  api.php`;
+    }
+    if (problemType === "batch") {
+      return `app/
+  Jobs/
+  Console/
+    Commands/
+  Services/`;
+    }
+    if (problemType === "evento") {
+      return `app/
+  Events/
+  Listeners/
+  Domain/
+    Events/`;
+    }
+    return base;
+  }
+  return `src/
+  domain/
+  application/
+  infrastructure/`;
 }
 
 function buildOptions(
@@ -39,6 +184,7 @@ function buildOptions(
         "SRP — Single Responsibility Principle",
         "OCP — Open/Closed Principle",
       ],
+      tradeOff: "Complexidade media-alta; beneficio alto em testabilidade e evolucao. Ideal quando o dominio vai crescer.",
     },
     {
       name: "Service Layer Pattern",
@@ -60,6 +206,7 @@ function buildOptions(
         "Separacao de concerns (Controller → Service → Repository)",
         "DIP parcial — Services dependem de interfaces de Repository",
       ],
+      tradeOff: "Complexidade baixa; beneficio rapido. Trade-off: menos rigidez, maior risco de degradacao se a equipe nao mantiver disciplina.",
     },
     {
       name: "Domain-Driven Design (DDD) Tatico",
@@ -82,6 +229,7 @@ function buildOptions(
         "Tell, Don't Ask (Object Calisthenics regra 9)",
         "Encapsular tipos primitivos (Object Calisthenics regra 3)",
       ],
+      tradeOff: "Complexidade alta; beneficio maximo em dominios ricos. Trade-off: investimento inicial maior, retorno em manutencao e extensibilidade.",
     },
   ];
 
@@ -134,7 +282,9 @@ function formatOutput(
   technology: Technology,
   context: string | undefined,
   options: ArchitectureOption[],
-  recommendedIndex: number
+  recommendedIndex: number,
+  problemType: ProblemType,
+  folderStructure: string
 ): string {
   const techLabel =
     technology === "laravel"
@@ -143,9 +293,21 @@ function formatOutput(
         ? "NestJS"
         : "Generico";
 
+  const problemTypeLabel =
+    problemType === "api"
+      ? "API (REST/HTTP)"
+      : problemType === "batch"
+        ? "Batch / Job / Fila"
+        : problemType === "evento"
+          ? "Evento / Mensageria"
+          : problemType === "crud"
+            ? "CRUD / Cadastro"
+            : "Generico";
+
   let output = `# Analise de Arquitetura\n\n`;
   output += `**Problema**: ${problem}\n`;
   output += `**Stack**: ${techLabel}\n`;
+  output += `**Tipo de problema identificado**: ${problemTypeLabel}\n`;
   if (context) {
     output += `**Contexto**: ${context}\n`;
   }
@@ -165,8 +327,16 @@ function formatOutput(
 
     output += `### Principios aplicados\n`;
     opt.principles.forEach((p) => (output += `- 📐 ${p}\n`));
+    if (opt.tradeOff) {
+      output += `\n### Trade-off (complexidade vs beneficio)\n`;
+      output += `${opt.tradeOff}\n`;
+    }
     output += `\n---\n\n`;
   });
+
+  output += `## Estrutura de pastas sugerida\n\n`;
+  output += `Para **${techLabel}** e um problema do tipo **${problemTypeLabel}**, considere organizar assim:\n\n`;
+  output += `\`\`\`\n${folderStructure}\n\`\`\`\n\n`;
 
   const rec = options[recommendedIndex];
   output += `## Recomendacao\n\n`;
@@ -174,11 +344,25 @@ function formatOutput(
   output += `**Justificativa**: `;
 
   if (recommendedIndex === 0) {
-    output += `A Clean Architecture com Use Cases oferece o melhor equilibrio entre testabilidade, separacao de responsabilidades e independencia de framework. E a escolha ideal quando o dominio tem complexidade moderada e voce quer garantir que a arquitetura escale com o tempo.\n`;
+    output += `A Clean Architecture com Use Cases oferece o melhor equilibrio entre testabilidade, separacao de responsabilidades e independencia de framework. `;
+    if (problemType === "api") {
+      output += `Para uma API, as camadas de Controller (Adapter) e Use Case ficam bem definidas, facilitando testes e evolucao dos endpoints. `;
+    } else if (problemType === "batch") {
+      output += `Para batch/jobs, Use Cases isolados permitem testar a logica sem rodar o scheduler. `;
+    }
+    output += `E a escolha ideal quando o dominio tem complexidade moderada e voce quer garantir que a arquitetura escale com o tempo.\n`;
   } else if (recommendedIndex === 1) {
-    output += `O Service Layer Pattern e pragmatico e eficaz para este cenario. Oferece boa separacao de responsabilidades sem o overhead de camadas adicionais, sendo ideal para projetos que precisam de velocidade de entrega sem sacrificar qualidade.\n`;
+    output += `O Service Layer Pattern e pragmatico e eficaz para este cenario. `;
+    if (problemType === "crud") {
+      output += `Para um CRUD ou cadastro simples, evita over-engineering mantendo controllers finos e services testaveis. `;
+    }
+    output += `Oferece boa separacao de responsabilidades sem o overhead de camadas adicionais, sendo ideal para projetos que precisam de velocidade de entrega sem sacrificar qualidade.\n`;
   } else {
-    output += `O DDD Tatico e a melhor escolha quando o dominio e complexo e cheio de regras de negocio. O investimento inicial em modelagem se paga rapidamente em expressividade e manutencibilidade a longo prazo.\n`;
+    output += `O DDD Tatico e a melhor escolha quando o dominio e complexo e cheio de regras de negocio. `;
+    if (problemType === "evento") {
+      output += `Para sistemas orientados a eventos, Aggregates e Domain Events modelam bem o fluxo. `;
+    }
+    output += `O investimento inicial em modelagem se paga rapidamente em expressividade e manutencibilidade a longo prazo.\n`;
   }
 
   output += `\n**Proximos passos sugeridos**:\n`;
@@ -209,12 +393,16 @@ export function register(server: McpServer): void {
     async ({ problem, technology, context }) => {
       const options = buildOptions(problem, technology);
       const recommendedIndex = selectRecommendation(options, problem, context);
+      const problemType = detectProblemType(problem, context);
+      const folderStructure = getFolderStructure(technology, problemType);
       const text = formatOutput(
         problem,
         technology,
         context,
         options,
-        recommendedIndex
+        recommendedIndex,
+        problemType,
+        folderStructure
       );
 
       return {

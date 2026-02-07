@@ -158,6 +158,43 @@ describe("tool analyze_architecture", () => {
     expect(text).toContain("Laravel");
   });
 
+  it("deve incluir tipo de problema identificado (API, CRUD, etc.)", async () => {
+    const result = await client.callTool({
+      name: "analyze_architecture",
+      arguments: {
+        problem: "Criar API REST de usuarios",
+        technology: "nestjs",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Tipo de problema|API|REST/i);
+  });
+
+  it("deve incluir estrutura de pastas sugerida", async () => {
+    const result = await client.callTool({
+      name: "analyze_architecture",
+      arguments: {
+        problem: "Modulo de pedidos",
+        technology: "laravel",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Estrutura de pastas|pastas sugerida/i);
+    expect(text).toContain("Laravel");
+  });
+
+  it("deve incluir trade-off (complexidade vs beneficio) nas opcoes", async () => {
+    const result = await client.callTool({
+      name: "analyze_architecture",
+      arguments: {
+        problem: "Sistema de notificacoes",
+        technology: "generic",
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Trade-off|complexidade|beneficio/i);
+  });
+
   it("deve adaptar descricao para NestJS quando technology=nestjs", async () => {
     const result = await client.callTool({
       name: "analyze_architecture",

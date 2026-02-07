@@ -36,7 +36,7 @@ function detectAndSuggest(
   const shouldCheck = (rule: string) =>
     rules.length === 0 || rules.includes(rule);
 
-  // Regra 2: Nao use ELSE
+  // Regra 2: Nao use ELSE — refatoracao ESPECIFICA baseada no codigo do usuario
   if (shouldCheck("no-else")) {
     for (let i = 0; i < lines.length; i++) {
       const trimmed = lines[i].trim();
@@ -45,7 +45,6 @@ function detectAndSuggest(
         !trimmed.startsWith("//") &&
         !trimmed.startsWith("*")
       ) {
-        // Busca o bloco if-else para mostrar contexto
         let blockStart = i;
         for (let j = i - 1; j >= 0; j--) {
           if (lines[j].trim().startsWith("if")) {
@@ -53,14 +52,42 @@ function detectAndSuggest(
             break;
           }
         }
+        const blockLines = lines.slice(
+          blockStart,
+          Math.min(i + 6, lines.length)
+        );
+        const originalBlock = blockLines.join("\n");
 
-        const originalBlock = lines
-          .slice(blockStart, Math.min(i + 4, lines.length))
-          .join("\n");
+        // Extrai condicao do if (primeira linha do bloco)
+        const ifLine = blockLines[0];
+        const condMatch = ifLine.match(/if\s*\(\s*([^)]+)\s*\)/);
+        const condition = condMatch ? condMatch[1].trim() : "condicao";
 
-        const refactored = language === "php"
-          ? `// Use early return:\nif ($condicao) {\n    return $resultadoA;\n}\n\nreturn $resultadoB;`
-          : `// Use early return:\nif (condicao) {\n  return resultadoA;\n}\n\nreturn resultadoB;`;
+        // Extrai corpo do else (linhas apos "else")
+        const elseStart = blockLines.findIndex((l) => /\belse\b/.test(l));
+        const elseBodyLines =
+          elseStart >= 0
+            ? blockLines.slice(elseStart + 1).filter((l) => l.trim() !== "{")
+            : [];
+        const elseBody = elseBodyLines
+          .map((l) => l.trim())
+          .filter((s) => s && s !== "}")
+          .join("\n  ");
+
+        // Corpo do if (entre if e else)
+        const ifBodyLines = blockLines
+          .slice(1, elseStart >= 0 ? elseStart : blockLines.length)
+          .filter((l) => l.trim() !== "{" && l.trim() !== "}");
+        const ifBody = ifBodyLines
+          .map((l) => l.trim())
+          .filter((s) => s && s !== "}")
+          .join("\n  ");
+
+        const indent = language === "php" ? "    " : "  ";
+        const refactored =
+          language === "php"
+            ? `// Early return (invertido):\nif (!(${condition})) {\n${indent}${elseBody.replace(/\n/g, "\n" + indent)}\n}\n\n${ifBody.replace(/\n/g, "\n" + indent)}`
+            : `// Early return (invertido):\nif (!(${condition})) {\n${indent}${elseBody.replace(/\n/g, "\n" + indent)}\n}\n\n${ifBody.replace(/\n/g, "\n" + indent)}`;
 
         suggestions.push({
           rule: "Nao use ELSE",
@@ -71,7 +98,7 @@ function detectAndSuggest(
           refactoredCode: refactored,
           location: `Linha ${i + 1}`,
         });
-        break; // Uma sugestao por regra para nao poluir
+        break;
       }
     }
   }
@@ -179,7 +206,44 @@ function detectAndSuggest(
     }
   }
 
-  // Regra 5: Um ponto por linha
+  // Regra 4: Colecoes em primeira classe
+  if (shouldCheck("colecoes-primeira-classe")) {
+    const collectionPattern =
+      /\b(items|list|array|collection)\s*:\s*(?:\w+\[\]|Array\s*<[\w\s,]+>)/g;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim().startsWith("//")) continue;
+      const match = collectionPattern.exec(lines[i]);
+      collectionPattern.lastIndex = 0;
+      if (match) {
+        const name = match[1];
+        const suggestedClassName =
+          name === "items"
+            ? "OrderItems"
+            : name === "list"
+              ? "UserList"
+              : name === "array"
+                ? "ItemCollection"
+                : "Collection";
+        const refactored =
+          language === "php"
+            ? `// Encapsule em classe:\nclass ${suggestedClassName} {\n  public function __construct(private array $items) {}\n  public function count(): int { return count($this->items); }\n  public function add($item): void { $this->items[] = $item; }\n}\n\nfunction process(${suggestedClassName} $${name}) { /* ... */ }`
+            : `// Encapsule em classe:\nclass ${suggestedClassName} {\n  constructor(private items: unknown[]) {}\n  get count(): number { return this.items.length; }\n  add(item: unknown): void { this.items.push(item); }\n}\n\nfunction process(${name}: ${suggestedClassName}) { /* ... */ }`;
+
+        suggestions.push({
+          rule: "Colecoes em primeira classe",
+          ruleNumber: 4,
+          description:
+            "Em vez de expor array/lista crua, crie uma classe que encapsule a colecao e exponha comportamento.",
+          originalCode: lines[i].trim(),
+          refactoredCode: refactored,
+          location: `Linha ${i + 1} ('${name}')`,
+        });
+        break;
+      }
+    }
+  }
+
+  // Regra 5: Um ponto por linha — codigo refatorado mais especifico quando possivel
   if (shouldCheck("um-ponto-por-linha")) {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
@@ -187,11 +251,12 @@ function detectAndSuggest(
 
       const dots = (line.match(/\.\w+\s*\(/g) || []).length;
       if (dots > 2) {
+        const parts = line.split(/\s*=\s*/);
+        const chain = parts.length > 1 ? parts[1].trim() : line;
         const refactored =
-          `// Quebre a cadeia em passos intermediarios:\n` +
-          `const step1 = obj.firstMethod();\n` +
-          `const step2 = step1.secondMethod();\n` +
-          `const result = step2.thirdMethod();`;
+          language === "php"
+            ? `// Quebre a cadeia em passos:\n$step1 = ${chain.split(".")[0]};\n$step2 = $step1->${chain.split(".")[1]?.replace(/\(\)$/, "()") ?? "nextMethod"}();\n$result = $step2->${chain.split(".")[2]?.replace(/\(\)$/, "()") ?? "finalMethod"}();`
+            : `// Quebre a cadeia em passos:\nconst step1 = ${chain.split(".")[0]};\nconst step2 = step1.${chain.split(".")[1] ?? "nextMethod"}();\nconst result = step2.${chain.split(".")[2] ?? "finalMethod"}();`;
 
         suggestions.push({
           rule: "Um ponto por linha",
@@ -203,6 +268,135 @@ function detectAndSuggest(
           location: `Linha ${i + 1}`,
         });
         break;
+      }
+    }
+  }
+
+  // Regra 6: Nao abrevie
+  if (shouldCheck("nao-abrevie")) {
+    const abbreviationPattern =
+      /\b([a-zA-Z]+(?:Mgr|Ctrl|Svc|Impl|Tmp|Buf|Cnt|Idx|Srv|Proc|Cfg|Dlg|Btn|Lbl|Msg))\b/g;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim().startsWith("//")) continue;
+      const match = abbreviationPattern.exec(lines[i]);
+      abbreviationPattern.lastIndex = 0;
+      if (match) {
+        const abbr = match[1];
+        const full =
+          abbr.includes("Mgr")
+            ? abbr.replace("Mgr", "Manager")
+            : abbr.includes("Svc")
+              ? abbr.replace("Svc", "Service")
+              : abbr.includes("Ctrl")
+                ? abbr.replace("Ctrl", "Controller")
+                : abbr + " (nome completo)";
+
+        suggestions.push({
+          rule: "Nao abrevie",
+          ruleNumber: 6,
+          description:
+            "Use nomes completos e descritivos. Abreviacoes prejudicam a leitura e o dominio.",
+          originalCode: lines[i].trim(),
+          refactoredCode: `// Renomeie '${abbr}' para '${full}' em toda a base de codigo.`,
+          location: `Linha ${i + 1} ('${abbr}')`,
+        });
+        break;
+      }
+    }
+  }
+
+  // Regra 7: Entidades pequenas (classe max 50 linhas)
+  if (shouldCheck("entidades-pequenas")) {
+    let inClass = false;
+    let classStart = -1;
+    let className = "";
+    let classDepth = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const classMatch = line.match(/^\s*class\s+(\w+)/);
+      if (classMatch) {
+        inClass = true;
+        classStart = i;
+        className = classMatch[1];
+        classDepth = 0;
+      }
+      if (inClass) {
+        classDepth += (line.match(/{/g) || []).length;
+        classDepth -= (line.match(/}/g) || []).length;
+        if (classDepth <= 0 && classStart >= 0) {
+          const classLines = i - classStart + 1;
+          if (classLines > 50) {
+            const originalBlock = lines
+              .slice(classStart, Math.min(classStart + 5, i + 1))
+              .join("\n");
+            const refactored =
+              `// Classe '${className}' tem ${classLines} linhas. Extraia responsabilidades:\n` +
+              `// Ex.: class ${className}Validation { ... }\n` +
+              `// Ex.: class ${className}Formatter { ... }\n` +
+              `// Mantenha ${className} como orquestrador fino.`;
+
+            suggestions.push({
+              rule: "Entidades pequenas (max 50 linhas)",
+              ruleNumber: 7,
+              description:
+                "Classes devem ter no maximo 50 linhas. Extraia blocos em classes auxiliares.",
+              originalCode: originalBlock + "\n// ... (" + classLines + " linhas no total)",
+              refactoredCode: refactored,
+              location: `Linhas ${classStart + 1}-${i + 1} (classe '${className}')`,
+            });
+          }
+          inClass = false;
+        }
+      }
+    }
+  }
+
+  // Regra 8: Maximo 2 variaveis de instancia
+  if (shouldCheck("max-2-variaveis-instancia")) {
+    let inClass = false;
+    let classStart = -1;
+    let classDepth = 0;
+    let instanceVarCount = 0;
+    const varNames: string[] = [];
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const classMatch = line.match(/^\s*class\s+(\w+)/);
+      if (classMatch) {
+        inClass = true;
+        classStart = i;
+        classDepth = 0;
+        instanceVarCount = 0;
+        varNames.length = 0;
+      }
+      if (inClass) {
+        classDepth += (line.match(/{/g) || []).length;
+        classDepth -= (line.match(/}/g) || []).length;
+        const propMatch = line.match(
+          /^\s*(?:readonly\s+)?(?:public|private|protected)\s+(?:readonly\s+)?(\w+)\s*[:=]|^\s*(?:private|protected|public)\s+\$(\w+)/
+        );
+        if (propMatch) {
+          instanceVarCount++;
+          varNames.push(propMatch[1] || propMatch[2] || "");
+        }
+        if (classDepth <= 0 && classStart >= 0 && instanceVarCount > 2) {
+          const refactored =
+            `// Agrupe as ${instanceVarCount} variaveis (${varNames.slice(0, 5).join(", ")}${varNames.length > 5 ? "..." : ""}) em um ou dois objetos de valor:\n` +
+            `// Ex.: private readonly config: ConfigCompleto; // agrupa varias props\n` +
+            `// Ou extraia uma classe relacionada que carregue parte das responsabilidades.`;
+
+          suggestions.push({
+            rule: "Maximo 2 variaveis de instancia",
+            ruleNumber: 8,
+            description:
+              "Object Calisthenics: cada classe no maximo 2 variaveis de instancia. Agrupe em value objects.",
+            originalCode: lines.slice(classStart, Math.min(classStart + 8, i + 1)).join("\n"),
+            refactoredCode: refactored,
+            location: `Linhas ${classStart + 1}-${i + 1} (${instanceVarCount} variaveis)`,
+          });
+          inClass = false;
+        } else if (classDepth <= 0) {
+          inClass = false;
+        }
       }
     }
   }

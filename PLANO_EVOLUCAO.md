@@ -277,7 +277,7 @@ GoF no contexto Clean Architecture:
 
 ---
 
-## FASE 5: Melhorar Tools `suggest_refactoring` e `analyze_architecture`
+## FASE 5: Melhorar Tools `suggest_refactoring` e `analyze_architecture` (Concluida)
 
 **Arquivos:** `src/tools/suggest-refactoring.ts`, `src/tools/analyze-architecture.ts`, testes correspondentes
 

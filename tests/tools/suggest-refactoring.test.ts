@@ -142,6 +142,48 @@ describe("tool suggest_refactoring", () => {
     expect(text).toContain("Sugestoes encontradas");
   });
 
+  it("deve sugerir refatoracao para colecao exposta (regra 4)", async () => {
+    const result = await client.callTool({
+      name: "suggest_refactoring",
+      arguments: {
+        code: "function process(items: string[]) { return items.length; }",
+        language: "typescript",
+        rules: ["colecoes-primeira-classe"],
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Colecoes|primeira classe|Regra 4/i);
+    expect(text).toContain("Antes:");
+    expect(text).toContain("Depois:");
+  });
+
+  it("deve sugerir refatoracao para abreviacao (regra 6)", async () => {
+    const result = await client.callTool({
+      name: "suggest_refactoring",
+      arguments: {
+        code: "class UserMgr { getUsers() {} }",
+        language: "typescript",
+        rules: ["nao-abrevie"],
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toMatch(/Nao abrevie|Regra 6|Manager/i);
+  });
+
+  it("deve incluir codigo refatorado especifico no no-else (condicao do usuario)", async () => {
+    const result = await client.callTool({
+      name: "suggest_refactoring",
+      arguments: {
+        code: "function check(x: number) {\n  if (x > 0) {\n    return \"positivo\";\n  } else {\n    return \"negativo\";\n  }\n}",
+        language: "typescript",
+        rules: ["no-else"],
+      },
+    });
+    const text = (result.content as Array<{ type: string; text: string }>)[0].text;
+    expect(text).toContain("x > 0");
+    expect(text).toMatch(/!\(x > 0\)|early return/i);
+  });
+
   it("deve funcionar com PHP", async () => {
     const result = await client.callTool({
       name: "suggest_refactoring",
