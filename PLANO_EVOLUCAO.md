@@ -210,7 +210,7 @@ Para cada principio (SRP, OCP, LSP, ISP, DIP):
 
 ---
 
-## FASE 3: Expandir Resources de Clean Architecture
+## FASE 3: Expandir Resources de Clean Architecture (Concluida)
 
 **Arquivos:** `src/resources/clean-architecture.ts` (expandir), `src/resources/clean-architecture-patterns.ts` (novo), `src/resources/design-patterns.ts` (novo), `src/resources/index.ts`, `tests/resources/clean-architecture-advanced.test.ts`
 

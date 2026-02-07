@@ -3,6 +3,8 @@ import { register as cleanCode } from "./clean-code.js";
 import { register as cleanCodeSmells } from "./clean-code-smells.js";
 import { register as solidPrinciples } from "./solid-principles.js";
 import { register as cleanArchitecture } from "./clean-architecture.js";
+import { register as cleanArchitecturePatterns } from "./clean-architecture-patterns.js";
+import { register as designPatterns } from "./design-patterns.js";
 import { register as objectCalisthenics } from "./object-calisthenics.js";
 import { register as laravelConventions } from "./laravel-conventions.js";
 import { register as nestjsPatterns } from "./nestjs-patterns.js";
@@ -15,6 +17,8 @@ export function registerAllResources(server: McpServer): void {
   cleanCodeSmells(server);
   solidPrinciples(server);
   cleanArchitecture(server);
+  cleanArchitecturePatterns(server);
+  designPatterns(server);
   objectCalisthenics(server);
   laravelConventions(server);
   nestjsPatterns(server);
