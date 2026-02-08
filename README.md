@@ -68,7 +68,7 @@ Acesse `http://localhost:6274` no navegador. La voce pode:
 
 ## Testes
 
-O projeto segue TDD (Test-Driven Development) com 130 testes cobrindo todas as tools, resources e prompts.
+O projeto segue TDD (Test-Driven Development) com mais de 220 testes cobrindo todas as tools, resources e prompts.
 
 ```bash
 # Modo watch (re-executa ao salvar)
@@ -89,7 +89,7 @@ npm run test:run
 
 ## Componentes Disponiveis
 
-### Tools (7)
+### Tools (11)
 
 Tools sao **acoes que o agente executa** automaticamente quando detecta que precisa analisar, revisar ou gerar algo.
 
@@ -98,27 +98,34 @@ Tools sao **acoes que o agente executa** automaticamente quando detecta que prec
 | `ping` | Verifica se o MCP esta ativo | — |
 | `analyze_architecture` | Analisa um problema e propoe opcoes de arquitetura (Clean Architecture, Service Layer, DDD) com pros/cons e recomendacao | `problem`, `technology`, `context` |
 | `review_code` | Revisa codigo contra Clean Code e Object Calisthenics, identificando violacoes com severidade e sugestoes | `code`, `language`, `focus` |
-| `suggest_refactoring` | Sugere refatoracoes baseadas em Object Calisthenics com exemplos antes/depois | `code`, `language`, `rules` |
-| `tdd_guide` | Guia o ciclo TDD (Red-Green-Refactor) com instrucoes e checklists por fase | `feature`, `phase`, `technology`, `code`, `test_code` |
+| `suggest_refactoring` | Sugere refatoracoes baseadas nas 9 regras de Object Calisthenics com exemplos antes/depois | `code`, `language`, `rules` |
+| `tdd_guide` | Guia o ciclo TDD (Red-Green-Refactor) com gates de aprovacao entre fases | `feature`, `phase`, `technology`, `code`, `test_code` |
 | `compare_sql` | Compara abordagem ORM vs SQL puro com analise de performance | `description`, `technology`, `tables`, `context` |
-| `plan_implementation` | Gera plano de implementacao faseado com perguntas de alinhamento | `feature`, `technology`, `requirements` |
+| `plan_implementation` | Gera plano de implementacao faseado com perguntas de alinhamento e **recomendacao de agente de IA por fase** | `feature`, `technology`, `requirements`, `team_context` (opcional) |
+| `detect_code_smells` | Detecta code smells por categoria (comments, functions, general, names, all): magic numbers, flag arguments, feature envy, God class, Long Method, Data Clumps, etc. | `code`, `language`, `category` |
+| `validate_architecture` | Valida conformidade com camadas do Clean Architecture; reporta imports invalidos e sugestoes | `structure`, `technology`, `layer` |
+| `explain_principle` | Dicionario de principios (SRP, OCP, LSP, ISP, DIP, DRY, KISS, YAGNI, Demeter, Tell Don't Ask, FIRST, SOLID): explicacao, exemplo, contra-exemplo | `principle`, `language`, `context` (opcional) |
 
-### Resources (8)
+### Resources (12)
 
 Resources sao a **base de conhecimento passiva** que o agente consulta automaticamente para fundamentar suas respostas.
 
 | Resource | URI | Conteudo |
 |----------|-----|----------|
-| Clean Code | `senior-mind://clean-code` | Principios, regras de nomenclatura, funcoes, tratamento de erros |
-| Clean Architecture | `senior-mind://clean-architecture` | Camadas, regra de dependencia, use cases, adapters |
-| Object Calisthenics | `senior-mind://object-calisthenics` | 9 regras com exemplos de violacao e correcao |
-| Laravel Conventions | `senior-mind://laravel-conventions` | Eloquent, FormRequest, Resources, Service Pattern, N+1 |
-| NestJS Patterns | `senior-mind://nestjs-patterns` | Modules, DI, DTOs, Pipes, Guards, Interceptors, Repository |
-| TDD Reference | `senior-mind://tdd-reference` | Red-Green-Refactor, estrategias, metricas, patterns de teste |
-| Vue 3 Patterns | `senior-mind://vue-patterns` | Composition API, script setup, composables, reatividade, performance |
-| React 18 Patterns | `senior-mind://react-patterns` | Hooks, custom hooks, component patterns, memoizacao, Suspense |
+| Clean Code | `senior-mind://references/clean-code` | Principios, nomenclatura, funcoes, tratamento de erros, boundaries, CQS, emergence |
+| Clean Code Smells | `senior-mind://references/clean-code-smells` | Code smells em 6 categorias (Comentarios, Funcoes, Gerais, Nomes, Testes) com exemplo e correcao |
+| SOLID Principles | `senior-mind://references/solid-principles` | SRP, OCP, LSP, ISP, DIP com violacao e correcao em TypeScript e PHP |
+| Clean Architecture | `senior-mind://references/clean-architecture` | Camadas, regra de dependencia, use cases, adapters, Screaming Architecture, Humble Object |
+| Clean Architecture Patterns | `senior-mind://references/clean-architecture-patterns` | Repository, Gateway, Presenter, DTOs, Use Case Interactor, Mapper, Domain Events |
+| Design Patterns | `senior-mind://references/design-patterns` | GoF no contexto Clean Architecture: Factory, Builder, Adapter, Strategy, Observer, Command |
+| Object Calisthenics | `senior-mind://references/object-calisthenics` | 9 regras com exemplos de violacao e correcao |
+| Laravel Conventions | `senior-mind://references/laravel-conventions` | Eloquent, FormRequest, Resources, Service Pattern, N+1 |
+| NestJS Patterns | `senior-mind://references/nestjs-patterns` | Modules, DI, DTOs, Pipes, Guards, Interceptors, Repository |
+| TDD Reference | `senior-mind://references/tdd-reference` | Red-Green-Refactor, estrategias, metricas, patterns de teste |
+| Vue 3 Patterns | `senior-mind://references/vue-patterns` | Composition API, script setup, composables, reatividade, performance |
+| React 18 Patterns | `senior-mind://references/react-patterns` | Hooks, custom hooks, component patterns, memoizacao, Suspense |
 
-### Prompts (6)
+### Prompts (7)
 
 Prompts sao **templates estruturados** que o usuario invoca explicitamente para iniciar uma conversa guiada.
 
@@ -128,8 +135,49 @@ Prompts sao **templates estruturados** que o usuario invoca explicitamente para 
 | `tdd-cycle` | Gera guia completo Red-Green-Refactor com checklists | `feature`, `technology` |
 | `code-review-backend` | Template de code review para backend | `code`, `framework` (laravel/nestjs) |
 | `code-review-frontend` | Template de code review para frontend | `code`, `framework` (vue/react) |
-| `implementation-plan` | Questionario de alinhamento + plano faseado | `feature`, `context` (opcional) |
+| `implementation-plan` | Questionario de alinhamento + plano faseado com **recomendacao de agente de IA por fase** | `feature`, `context` (opcional), `team_context` (opcional) |
 | `sql-analysis` | Analise profunda de query SQL | `query`, `context` (opcional) |
+| `mentor-mode` | Instrui o agente a NAO escrever codigo final ate completar checkpoints de Clean Architecture, Clean Code e TDD | `feature`, `technology`, `complexity` (opcional) |
+
+---
+
+## Modo Mentor
+
+O prompt **`mentor-mode`** guia o agente a **nao escrever codigo final** ate que checkpoints de qualidade sejam completados. Ideal para features que exigem decisões de arquitetura e design antes da implementacao.
+
+**Checkpoints:**
+
+1. **Analise Arquitetural** — Camadas (Entity, Use Case, Adapter, Framework), regra de dependencia, DIP  
+2. **Revisao Clean Code** — Convencoes de nomes, tamanho de funcoes, tratamento de erros, DRY/KISS/YAGNI  
+3. **Contratos e Interfaces (SOLID)** — Ports, DTOs, SRP/OCP  
+4. **Estrategia de Testes (TDD)** — Cenarios por Use Case, test doubles, ordem Entity → Use Case → Adapter  
+5. **Implementacao Guiada** — So apos aprovacao dos anteriores; TDD rigoroso e Object Calisthenics no refactor  
+
+**Complexidade:** `low` (checkpoints simplificados), `medium` (completos), `high` (+ trade-offs e ADR).
+
+**Uso:** Invoque o prompt `mentor-mode` com a feature e a stack (laravel/nestjs/generic). O agente recebera um template com os 5 checkpoints e so deve prosseguir para codigo apos cada gate.
+
+---
+
+## Recomendacao de Agente de IA
+
+A tool **`plan_implementation`** e o prompt **`implementation-plan`** incluem **recomendacao de qual modelo de IA usar em cada fase** do plano (rapido vs avancado), para otimizar custo sem perder qualidade.
+
+**Logica por fase:**
+
+| Fase | Agente recomendado | Motivo |
+|------|--------------------|--------|
+| 1. Entidades/Modelagem | Avancado | Decisoes de dominio, atributos, relacionamentos |
+| 2. Repository | Rapido | Boilerplate previsivel |
+| 3. Service/TDD | Avancado | Logica de negocio, cenarios de teste, design |
+| 4. API/Controller | Rapido | Controller fino, DTOs, rotas — padrao mecanico |
+| 5. Refinamentos | Misto | Paginacao/filtros (rapido); cache/performance (avancado) |
+
+Cada fase no plano exibe **Nivel do modelo**, **Justificativa** e **Dica de uso** (como instruir o agente). Ao final do plano, uma **tabela resumo** consolida a recomendacao por fase.
+
+**Parametro `team_context` (opcional):** Informe o nivel da equipe (ex.: "equipe junior, 2 devs"). Para equipes menos experientes, o MCP pode recomendar modelo avancado em mais fases (incluindo Repository e API) para reduzir retrabalho.
+
+**Pergunta de alinhamento:** O questionario inclui "Qual IDE/agente de IA voce esta usando? (Cursor, Claude Desktop, Copilot, outro)" para adaptar as dicas (ex.: no Cursor, usar Agent mode para tarefas avancadas).
 
 ---
 
@@ -153,10 +201,13 @@ Tools sao **chamadas ativamente** pelo agente quando detecta que precisa executa
 
 - Usuario: "Analise a arquitetura para um modulo de pagamentos" → agente chama `analyze_architecture`
 - Usuario: "Revise este codigo" → agente chama `review_code` com o codigo
+- Usuario: "Detecte code smells neste trecho" → agente chama `detect_code_smells` (por categoria)
+- Usuario: "Valide se esta estrutura respeita Clean Architecture" → agente chama `validate_architecture`
+- Usuario: "Explique o principio SRP em TypeScript" → agente chama `explain_principle`
 - Usuario: "Sugira refatoracoes para esta classe" → agente chama `suggest_refactoring`
 - Usuario: "Me guie no TDD para criar um endpoint de usuarios" → agente chama `tdd_guide` com `phase="red"`
 - Usuario: "Compare ORM vs SQL para esta query" → agente chama `compare_sql`
-- Usuario: "Crie um plano de implementacao para esta feature" → agente chama `plan_implementation`
+- Usuario: "Crie um plano de implementacao para esta feature" → agente chama `plan_implementation` (com recomendacao de agente por fase)
 
 ### Prompts — Templates que o usuario invoca
 
@@ -171,7 +222,8 @@ Prompts sao **invocados explicitamente** pelo usuario (via menu de prompts no Cu
 
 - Selecione `code-review-backend`, preencha `code` e `framework: laravel` → receba um checklist completo de review
 - Selecione `architecture-decision`, preencha `problem` → receba um template ADR
-- Selecione `implementation-plan`, preencha `feature` → receba questionario de alinhamento + plano faseado
+- Selecione `implementation-plan`, preencha `feature` → receba questionario de alinhamento + plano faseado com recomendacao de agente de IA por fase
+- Selecione `mentor-mode`, preencha `feature` e `technology` → receba os 5 checkpoints (arquitetura, Clean Code, SOLID, TDD, implementacao) antes de codar
 - Selecione `sql-analysis`, preencha `query` → receba template de analise SQL completo
 
 ### Fluxo Tipico de Uso Combinado
@@ -205,6 +257,15 @@ Exemplo de uma sessao real de trabalho:
 Adicione ao arquivo `.cursor/mcp.json` do seu projeto ou da configuracao global:
 
 **Com Docker (recomendado):**
+
+Antes de usar o MCP (ou apos alterar o codigo fonte), compile o projeto para gerar o `dist/`:
+
+```bash
+cd /caminho/para/senior-mind-mcp
+docker compose run --rm app npx tsc
+```
+
+Em seguida, configure o Cursor para usar o MCP via Docker:
 
 ```json
 {
@@ -330,11 +391,18 @@ senior-mind-mcp/
 │   │   ├── suggest-refactoring.ts
 │   │   ├── tdd-guide.ts
 │   │   ├── compare-sql.ts
-│   │   └── plan-implementation.ts
+│   │   ├── plan-implementation.ts
+│   │   ├── detect-code-smells.ts
+│   │   ├── validate-architecture.ts
+│   │   └── explain-principle.ts
 │   ├── resources/
 │   │   ├── index.ts          # Registro de todos os resources
 │   │   ├── clean-code.ts
+│   │   ├── clean-code-smells.ts
+│   │   ├── solid-principles.ts
 │   │   ├── clean-architecture.ts
+│   │   ├── clean-architecture-patterns.ts
+│   │   ├── design-patterns.ts
 │   │   ├── object-calisthenics.ts
 │   │   ├── laravel-conventions.ts
 │   │   ├── nestjs-patterns.ts
@@ -348,7 +416,8 @@ senior-mind-mcp/
 │       ├── code-review-backend.ts
 │       ├── code-review-frontend.ts
 │       ├── implementation-plan.ts
-│       └── sql-analysis.ts
+│       ├── sql-analysis.ts
+│       └── mentor-mode.ts
 ├── tests/
 │   ├── config.test.ts
 │   ├── server.test.ts
@@ -359,15 +428,21 @@ senior-mind-mcp/
 │   │   ├── suggest-refactoring.test.ts
 │   │   ├── tdd-guide.test.ts
 │   │   ├── compare-sql.test.ts
-│   │   └── plan-implementation.test.ts
+│   │   ├── plan-implementation.test.ts
+│   │   ├── detect-code-smells.test.ts
+│   │   ├── validate-architecture.test.ts
+│   │   └── explain-principle.test.ts
 │   ├── resources/
 │   │   ├── fundamentals.test.ts
 │   │   ├── backend.test.ts
-│   │   └── frontend.test.ts
+│   │   ├── frontend.test.ts
+│   │   ├── clean-code-advanced.test.ts
+│   │   └── clean-architecture-advanced.test.ts
 │   └── prompts/
 │       ├── architecture-tdd.test.ts
 │       ├── code-review.test.ts
-│       └── planning-sql.test.ts
+│       ├── planning-sql.test.ts
+│       └── mentor-mode.test.ts
 ├── docker-compose.yml
 ├── Dockerfile
 ├── package.json

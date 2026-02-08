@@ -398,7 +398,7 @@ Isso permite refinar a recomendacao: equipe junior pode precisar de modelo avanc
 
 ---
 
-## FASE 8: Finalizacao
+## FASE 8: Finalizacao (Concluida)
 
 **Arquivos:** `README.md`, `dist/` (rebuild)
 
