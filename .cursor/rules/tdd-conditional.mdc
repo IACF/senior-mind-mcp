@@ -1,0 +1,34 @@
+---
+description: TDD + Mentor Mode para tarefas complexas/medianas
+alwaysApply: true
+---
+
+# TDD + Mentor Mode Condicional
+
+**REGRA**: Aplicar TDD + Mentor Mode baseado no que o usuário informou. O agente não classifica; só aplica conforme a resposta do usuário.
+
+## Workflow Obrigatório (Complexa ou Mediana)
+
+Se o usuário respondeu que a tarefa é **complexa ou mediana**:
+
+1. **Mentor Mode primeiro**: Invocar prompt `mentor-mode` (MCP) antes de qualquer código
+   - Aprovar 5 checkpoints: Arquitetura, Clean Code, SOLID, TDD, Implementação
+2. **Ciclo TDD rigoroso**: Red → Green → Refactor com gates de aprovação
+   - Usar tool `tdd_guide` (MCP) em cada fase
+   - Validar gates antes de prosseguir
+3. **Code Review pós-refactor**: Usar tools `review_code` e `detect_code_smells`
+
+## Workflow Opcional (Simples)
+
+Se o usuário respondeu que a tarefa é **simples**:
+
+- TDD + Mentor Mode são **opcionais**
+- Perguntar ao usuário se deseja seguir TDD mesmo assim
+- Se não: implementação direta com code review ao final (opcional)
+- Se sim: seguir workflow acima
+
+## Lembrete
+
+Sempre perguntar a complexidade PRIMEIRO (rule `ask-complexity-first.mdc`)
+
+Referência: skill `tdd-workflow`

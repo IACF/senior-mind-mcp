@@ -1,0 +1,27 @@
+---
+description: Perguntar ao usuário se a tarefa é complexa, mediana ou simples (quem classifica é sempre o usuário)
+alwaysApply: true
+---
+
+# Perguntar Complexidade Primeiro
+
+**REGRA**: Ao iniciar qualquer implementação ou planejamento, SEMPRE perguntar ao usuário e aguardar a resposta:
+
+**"Esta tarefa é complexa, mediana ou simples?"**
+
+**Quem classifica é SEMPRE o usuário.** O agente NUNCA decide ou infere a complexidade; apenas pergunta e aplica o fluxo conforme a resposta.
+
+## Referência para o Usuário (opcional)
+
+O agente pode exibir estes exemplos como ajuda para o usuário decidir (não para o agente classificar):
+
+- **Complexa**: múltiplos módulos, decisões arquiteturais, >3 dias
+- **Mediana**: 1-2 módulos, lógica moderada, 1-3 dias
+- **Simples**: CRUD básico, ajuste pequeno, bug pontual, <1 dia
+
+## Ação Baseada na Resposta do Usuário
+
+- Se o usuário disser **complexa ou mediana** → TDD + Mentor Mode obrigatórios (skill `tdd-workflow`)
+- Se o usuário disser **simples** → TDD + Mentor Mode opcionais (perguntar se quer usar mesmo assim)
+
+Referência: skill `implementation-planning`

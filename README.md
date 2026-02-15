@@ -316,6 +316,47 @@ Edite o arquivo de configuracao do Claude Desktop (`claude_desktop_config.json`)
 
 ---
 
+## Skills, Sub-agents e Workflows
+
+O Senior Mind MCP inclui um **padrão replicável** de Skills (Cursor), Sub-agents e Workflows (Claude Code/outros) para orquestrar o uso do MCP no dia a dia. **Quem classifica a complexidade (complexa/mediana/simples) é sempre o usuário;** o agente apenas pergunta e aplica o fluxo.
+
+### Regras do padrao
+
+1. **Perguntar complexidade sempre**: Ao iniciar implementacao ou planejamento, o agente pergunta: "Esta tarefa e complexa, mediana ou simples?" e aguarda a resposta do usuario.
+2. **TDD + Mentor Mode condicional**: Se o usuario disser **complexa ou mediana** → TDD + Mentor Mode obrigatorios. Se disser **simples** → opcionais (perguntar se quer usar).
+3. **Implementation Planning no modo Plan**: Sempre que estiver em modo Plan, usar o workflow de planejamento (com pergunta de complexidade).
+
+### No Cursor (skills nativas)
+
+O projeto ja inclui em `.cursor/`:
+
+- **Rules**: `use-senior-mind-mcp.mdc`, `ask-complexity-first.mdc`, `tdd-conditional.mdc`
+- **Skills**: `code-review`, `architecture-advisor`, `tdd-workflow`, `implementation-planning`, `sql-advisor`
+- **Agents**: `.cursor/agents/AGENTS.md` com configuracao dos 5 sub-agents (Code Review, Architecture, TDD, Implementation Planner, Refactoring)
+
+As rules sao aplicadas automaticamente; as skills sao descobertas pelo agente quando relevantes.
+
+### No Claude Code e outros agentes
+
+Para agentes sem skills nativas, use a pasta `.senior-mind/`:
+
+- **Workflows obrigatorios**: Copie o conteudo de `workflows/CONDITIONAL-TDD-WORKFLOW.md` ou `workflows/CONDITIONAL-PLANNING.md` no inicio da conversa, conforme o contexto.
+- **Workflows opcionais**: `code-review-workflow.md`, `architecture-workflow.md`, `sql-workflow.md`
+- **Instrucoes**: Veja `.senior-mind/README.md`
+
+### Replicar em outro projeto
+
+Para levar esse padrao para um projeto (ex.: sua API ou frontend):
+
+```bash
+# Do diretorio senior-mind-mcp
+./copy-senior-mind-patterns.sh /caminho/para/seu-projeto
+```
+
+Isso copia `.cursor/rules`, `.cursor/skills`, `.cursor/agents` e `.senior-mind/` para o projeto destino. Em seguida, configure o Senior Mind MCP no projeto (mcp.json ou config global) e use normalmente.
+
+---
+
 ## Integracao com Context7
 
 O Senior Mind pode ser usado em conjunto com o [Context7 MCP](https://context7.com) para:
@@ -379,6 +420,28 @@ Crie um endpoint de autenticacao JWT no NestJS. use context7
 
 ```
 senior-mind-mcp/
+├── .cursor/                    # Padrao para Cursor (rules, skills, agents)
+│   ├── rules/
+│   │   ├── use-senior-mind-mcp.mdc
+│   │   ├── ask-complexity-first.mdc
+│   │   └── tdd-conditional.mdc
+│   ├── skills/
+│   │   ├── code-review/
+│   │   ├── architecture-advisor/
+│   │   ├── tdd-workflow/
+│   │   ├── implementation-planning/
+│   │   └── sql-advisor/
+│   └── agents/
+│       └── AGENTS.md
+├── .senior-mind/               # Padrao para Claude Code/outros (workflows)
+│   ├── workflows/
+│   │   ├── CONDITIONAL-TDD-WORKFLOW.md
+│   │   ├── CONDITIONAL-PLANNING.md
+│   │   ├── code-review-workflow.md
+│   │   ├── architecture-workflow.md
+│   │   └── sql-workflow.md
+│   └── README.md
+├── copy-senior-mind-patterns.sh  # Script para replicar padrao em outros projetos
 ├── src/
 │   ├── index.ts              # Entry point (stdio transport)
 │   ├── server.ts             # Criacao do McpServer e registro de componentes
