@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="Docs/senior-mind-logo.png" alt="Senior Mind MCP" width="600">
+</p>
+
 # Senior Mind MCP
 
 MCP (Model Context Protocol) server que replica a mentalidade de um desenvolvedor senior. Fornece tools, resources e prompts para guiar agentes de IA (Cursor, Claude Desktop, etc.) com boas praticas de engenharia de software.
