@@ -256,6 +256,90 @@ Exemplo de uma sessao real de trabalho:
 
 ---
 
+## Task Workflow: Plano Tecnico + TDD por Fase
+
+O **Task Workflow** e um fluxo estruturado para implementar tarefas tecnicas do dia a dia — modulos, servicos, bug fixes e refatoracoes — com plano revisavel, TDD por fase e rastreamento de progresso compartilhavel com o time.
+
+Projetado para **trabalho assistido** (dev presente) e **TDD central** em cada fase.
+
+### Como funciona
+
+```
+/task [descricao]  →  task-brief.md (revise)  →  confirmar + selecionar fases  →  task-plan.json  →  /task fase N (nova sessao)
+```
+
+**Artefatos gerados em `.senior-mind/` do seu projeto:**
+
+| Arquivo | Proposito |
+|---------|-----------|
+| `[slug]-brief.md` | Plano tecnico revisavel — fases, arquivos, TDD detalhado |
+| `[slug]-plan.json` | Tracker de progresso por fase — compartilhavel via git |
+
+### Iniciando uma nova tarefa
+
+```
+/task Implementar modulo de pagamentos no NestJS com Stripe
+```
+
+O agente ira:
+1. Perguntar os comandos do seu projeto (teste, lint, build)
+2. Gerar `.senior-mind/modulo-pagamentos-nestjs-brief.md` com plano tecnico completo
+3. **Parar para voce revisar** — abra o arquivo e confirme se as fases estao corretas
+4. Apos confirmacao, perguntar quais fases deseja executar agora
+5. Gerar `.senior-mind/modulo-pagamentos-nestjs-plan.json`
+6. Executar as fases selecionadas com TDD (RED → GREEN → REFACTOR)
+
+### Executando uma fase especifica
+
+Quando o brief ja existe (em outra sessao ou por outro dev do time):
+
+```
+/task fase 2
+```
+
+O agente encontra o `*-plan.json` em `.senior-mind/`, executa a Fase 2 em contexto limpo e encerra a sessao ao concluir. Cada fase roda em sessao propria — sem acumulo de contexto.
+
+```
+/task fase 2 e 3     # executa as fases 2 e 3 em sequencia
+/task todas as fases  # executa todas as fases pendentes
+```
+
+### Colaboracao entre devs
+
+Os arquivos `.senior-mind/` sao commitados no repositorio. Isso permite que membros do time trabalhem em fases diferentes de forma independente:
+
+```
+# Dev A (hoje)
+/task Refatorar sistema de creditos Client->CreditBucket
+→ Gera brief + plan, executa Fase 1, commita .senior-mind/
+
+# Dev B (amanha, apos pull)
+/task fase 2
+→ Agente le o plan.json existente, executa Fase 2 em contexto limpo
+
+# Dev A (depois)
+/task fase 4
+→ Continua de onde o time parou
+```
+
+### Tipos de tarefa suportados
+
+| taskType | Fases geradas |
+|----------|--------------|
+| `nova-feature` | Contratos → Service TDD → API → Refinamentos |
+| `bug-fix` | Reproducao (RED) → Correcao (GREEN) → Edge Cases (REFACTOR) |
+| `refatoracao` | Rede de Seguranca → Refatoracao → Validacao Arquitetural |
+| `modulo` | Entidade → Repository → Service (TDD) → Controller → Refinamentos |
+| `servico` | Contratos/Interfaces → Implementacao (TDD) → Integracao |
+
+### Como usar
+
+Para usar o Task Workflow, configure o **Senior Mind MCP** no seu projeto e use `/task` diretamente no seu agente de IA (Claude Code, Cursor, etc.). O MCP ja inclui as tools `create_task_brief` e `create_task_plan` que alimentam o workflow — nenhuma instalacao adicional e necessaria.
+
+Consulte a secao **Inicio Rapido** para configurar o Senior Mind MCP no seu ambiente.
+
+---
+
 ## Configuracao no Cursor
 
 Adicione ao arquivo `.cursor/mcp.json` do seu projeto ou da configuracao global:
