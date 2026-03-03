@@ -129,7 +129,7 @@ Resources sao a **base de conhecimento passiva** que o agente consulta automatic
 | Vue 3 Patterns | `senior-mind://references/vue-patterns` | Composition API, script setup, composables, reatividade, performance |
 | React 18 Patterns | `senior-mind://references/react-patterns` | Hooks, custom hooks, component patterns, memoizacao, Suspense |
 
-### Prompts (7)
+### Prompts (8)
 
 Prompts sao **templates estruturados** que o usuario invoca explicitamente para iniciar uma conversa guiada.
 
@@ -142,6 +142,7 @@ Prompts sao **templates estruturados** que o usuario invoca explicitamente para 
 | `implementation-plan` | Questionario de alinhamento + plano faseado com **recomendacao de agente de IA por fase** | `feature`, `context` (opcional), `team_context` (opcional) |
 | `sql-analysis` | Analise profunda de query SQL | `query`, `context` (opcional) |
 | `mentor-mode` | Instrui o agente a NAO escrever codigo final ate completar checkpoints de Clean Architecture, Clean Code e TDD | `feature`, `technology`, `complexity` (opcional) |
+| `task` | Ponto de entrada do Task Workflow. Gera ou continua um plano tecnico com TDD por fase | `input` — descricao da tarefa ou fase (`"fase 2"`, `"todas as fases"`) |
 
 ---
 
@@ -332,11 +333,32 @@ Os arquivos `.senior-mind/` sao commitados no repositorio. Isso permite que memb
 | `modulo` | Entidade → Repository → Service (TDD) → Controller → Refinamentos |
 | `servico` | Contratos/Interfaces → Implementacao (TDD) → Integracao |
 
-### Como usar
+### Instalacao (uma vez por maquina)
 
-Para usar o Task Workflow, configure o **Senior Mind MCP** no seu projeto e use `/task` diretamente no seu agente de IA (Claude Code, Cursor, etc.). O MCP ja inclui as tools `create_task_brief` e `create_task_plan` que alimentam o workflow — nenhuma instalacao adicional e necessaria.
+**Passo 1:** Configure o Senior Mind MCP no seu ambiente (veja a secao **Inicio Rapido**).
 
-Consulte a secao **Inicio Rapido** para configurar o Senior Mind MCP no seu ambiente.
+**Passo 2:** Execute o script de instalacao global uma unica vez:
+
+```bash
+./install-senior-mind-global.sh
+```
+
+O script pergunta qual agente de IA voce usa e instala o atalho `/task` no diretorio correto:
+
+| Agente | Instalado em |
+|--------|--------------|
+| Claude Code | `~/.claude/commands/task.md` |
+| Cursor | `~/.cursor/rules/senior-mind-task.mdc` |
+| Codex | `~/.codex/instructions.md` |
+| Open Code | `~/.opencode/instructions.md` |
+
+Apos a instalacao, `/task` funciona em **qualquer projeto** sem copiar arquivos:
+
+```
+Claude Code: /task Implementar login com JWT
+Cursor:      /task Implementar login com JWT
+Outro MCP:   invocar prompt "task" com input="Implementar login com JWT"
+```
 
 ---
 
@@ -530,6 +552,12 @@ senior-mind-mcp/
 │   │   └── sql-workflow.md
 │   └── README.md
 ├── copy-senior-mind-patterns.sh  # Script para replicar padrao em outros projetos
+├── install-senior-mind-global.sh # Instalacao global do /task (execute uma vez por maquina)
+├── install/                      # Templates do atalho /task por agente
+│   ├── claude-commands/task.md
+│   ├── cursor-rules/senior-mind-task.mdc
+│   ├── codex/task-instructions.md
+│   └── opencode/task-instructions.md
 ├── src/
 │   ├── index.ts              # Entry point (stdio transport)
 │   ├── server.ts             # Criacao do McpServer e registro de componentes
@@ -568,7 +596,8 @@ senior-mind-mcp/
 │       ├── code-review-frontend.ts
 │       ├── implementation-plan.ts
 │       ├── sql-analysis.ts
-│       └── mentor-mode.ts
+│       ├── mentor-mode.ts
+│       └── task.ts
 ├── tests/
 │   ├── config.test.ts
 │   ├── server.test.ts
@@ -593,7 +622,8 @@ senior-mind-mcp/
 │       ├── architecture-tdd.test.ts
 │       ├── code-review.test.ts
 │       ├── planning-sql.test.ts
-│       └── mentor-mode.test.ts
+│       ├── mentor-mode.test.ts
+│       └── task.test.ts
 ├── docker-compose.yml
 ├── Dockerfile
 ├── package.json
