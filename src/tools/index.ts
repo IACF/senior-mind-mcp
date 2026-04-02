@@ -9,6 +9,8 @@ import { register as planImplementation } from "./plan-implementation.js";
 import { register as detectCodeSmells } from "./detect-code-smells.js";
 import { register as validateArchitecture } from "./validate-architecture.js";
 import { register as explainPrinciple } from "./explain-principle.js";
+import { register as createTaskBrief } from "./create-task-brief.js";
+import { register as createTaskPlan } from "./create-task-plan.js";
 
 export function registerAllTools(server: McpServer): void {
   ping(server);
@@ -21,4 +23,6 @@ export function registerAllTools(server: McpServer): void {
   detectCodeSmells(server);
   validateArchitecture(server);
   explainPrinciple(server);
+  createTaskBrief(server);
+  createTaskPlan(server);
 }

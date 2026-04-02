@@ -129,7 +129,7 @@ Resources sao a **base de conhecimento passiva** que o agente consulta automatic
 | Vue 3 Patterns | `senior-mind://references/vue-patterns` | Composition API, script setup, composables, reatividade, performance |
 | React 18 Patterns | `senior-mind://references/react-patterns` | Hooks, custom hooks, component patterns, memoizacao, Suspense |
 
-### Prompts (7)
+### Prompts (8)
 
 Prompts sao **templates estruturados** que o usuario invoca explicitamente para iniciar uma conversa guiada.
 
@@ -142,6 +142,7 @@ Prompts sao **templates estruturados** que o usuario invoca explicitamente para 
 | `implementation-plan` | Questionario de alinhamento + plano faseado com **recomendacao de agente de IA por fase** | `feature`, `context` (opcional), `team_context` (opcional) |
 | `sql-analysis` | Analise profunda de query SQL | `query`, `context` (opcional) |
 | `mentor-mode` | Instrui o agente a NAO escrever codigo final ate completar checkpoints de Clean Architecture, Clean Code e TDD | `feature`, `technology`, `complexity` (opcional) |
+| `task` | Ponto de entrada do Task Workflow. Gera ou continua um plano tecnico com TDD por fase | `input` — descricao da tarefa ou fase (`"fase 2"`, `"todas as fases"`) |
 
 ---
 
@@ -252,6 +253,111 @@ Exemplo de uma sessao real de trabalho:
 
 6. Apos implementar, peca sugestoes de refatoracao
    → Agente chama tool `suggest_refactoring`
+```
+
+---
+
+## Task Workflow: Plano Tecnico + TDD por Fase
+
+O **Task Workflow** e um fluxo estruturado para implementar tarefas tecnicas do dia a dia — modulos, servicos, bug fixes e refatoracoes — com plano revisavel, TDD por fase e rastreamento de progresso compartilhavel com o time.
+
+Projetado para **trabalho assistido** (dev presente) e **TDD central** em cada fase.
+
+### Como funciona
+
+```
+/task [descricao]  →  task-brief.md (revise)  →  confirmar + selecionar fases  →  task-plan.json  →  /task fase N (nova sessao)
+```
+
+**Artefatos gerados em `.senior-mind/` do seu projeto:**
+
+| Arquivo | Proposito |
+|---------|-----------|
+| `[slug]-brief.md` | Plano tecnico revisavel — fases, arquivos, TDD detalhado |
+| `[slug]-plan.json` | Tracker de progresso por fase — compartilhavel via git |
+
+### Iniciando uma nova tarefa
+
+```
+/task Implementar modulo de pagamentos no NestJS com Stripe
+```
+
+O agente ira:
+1. Perguntar os comandos do seu projeto (teste, lint, build)
+2. Gerar `.senior-mind/modulo-pagamentos-nestjs-brief.md` com plano tecnico completo
+3. **Parar para voce revisar** — abra o arquivo e confirme se as fases estao corretas
+4. Apos confirmacao, perguntar quais fases deseja executar agora
+5. Gerar `.senior-mind/modulo-pagamentos-nestjs-plan.json`
+6. Executar as fases selecionadas com TDD (RED → GREEN → REFACTOR)
+
+### Executando uma fase especifica
+
+Quando o brief ja existe (em outra sessao ou por outro dev do time):
+
+```
+/task fase 2
+```
+
+O agente encontra o `*-plan.json` em `.senior-mind/`, executa a Fase 2 em contexto limpo e encerra a sessao ao concluir. Cada fase roda em sessao propria — sem acumulo de contexto.
+
+```
+/task fase 2 e 3     # executa as fases 2 e 3 em sequencia
+/task todas as fases  # executa todas as fases pendentes
+```
+
+### Colaboracao entre devs
+
+Os arquivos `.senior-mind/` sao commitados no repositorio. Isso permite que membros do time trabalhem em fases diferentes de forma independente:
+
+```
+# Dev A (hoje)
+/task Refatorar sistema de creditos Client->CreditBucket
+→ Gera brief + plan, executa Fase 1, commita .senior-mind/
+
+# Dev B (amanha, apos pull)
+/task fase 2
+→ Agente le o plan.json existente, executa Fase 2 em contexto limpo
+
+# Dev A (depois)
+/task fase 4
+→ Continua de onde o time parou
+```
+
+### Tipos de tarefa suportados
+
+| taskType | Fases geradas |
+|----------|--------------|
+| `nova-feature` | Contratos → Service TDD → API → Refinamentos |
+| `bug-fix` | Reproducao (RED) → Correcao (GREEN) → Edge Cases (REFACTOR) |
+| `refatoracao` | Rede de Seguranca → Refatoracao → Validacao Arquitetural |
+| `modulo` | Entidade → Repository → Service (TDD) → Controller → Refinamentos |
+| `servico` | Contratos/Interfaces → Implementacao (TDD) → Integracao |
+
+### Instalacao (uma vez por maquina)
+
+**Passo 1:** Configure o Senior Mind MCP no seu ambiente (veja a secao **Inicio Rapido**).
+
+**Passo 2:** Execute o script de instalacao global uma unica vez:
+
+```bash
+./install-senior-mind-global.sh
+```
+
+O script pergunta qual agente de IA voce usa e instala o atalho `/task` no diretorio correto:
+
+| Agente | Instalado em |
+|--------|--------------|
+| Claude Code | `~/.claude/commands/task.md` |
+| Cursor | `~/.cursor/rules/senior-mind-task.mdc` |
+| Codex | `~/.codex/instructions.md` |
+| Open Code | `~/.opencode/instructions.md` |
+
+Apos a instalacao, `/task` funciona em **qualquer projeto** sem copiar arquivos:
+
+```
+Claude Code: /task Implementar login com JWT
+Cursor:      /task Implementar login com JWT
+Outro MCP:   invocar prompt "task" com input="Implementar login com JWT"
 ```
 
 ---
@@ -446,6 +552,12 @@ senior-mind-mcp/
 │   │   └── sql-workflow.md
 │   └── README.md
 ├── copy-senior-mind-patterns.sh  # Script para replicar padrao em outros projetos
+├── install-senior-mind-global.sh # Instalacao global do /task (execute uma vez por maquina)
+├── install/                      # Templates do atalho /task por agente
+│   ├── claude-commands/task.md
+│   ├── cursor-rules/senior-mind-task.mdc
+│   ├── codex/task-instructions.md
+│   └── opencode/task-instructions.md
 ├── src/
 │   ├── index.ts              # Entry point (stdio transport)
 │   ├── server.ts             # Criacao do McpServer e registro de componentes
@@ -484,7 +596,8 @@ senior-mind-mcp/
 │       ├── code-review-frontend.ts
 │       ├── implementation-plan.ts
 │       ├── sql-analysis.ts
-│       └── mentor-mode.ts
+│       ├── mentor-mode.ts
+│       └── task.ts
 ├── tests/
 │   ├── config.test.ts
 │   ├── server.test.ts
@@ -509,7 +622,8 @@ senior-mind-mcp/
 │       ├── architecture-tdd.test.ts
 │       ├── code-review.test.ts
 │       ├── planning-sql.test.ts
-│       └── mentor-mode.test.ts
+│       ├── mentor-mode.test.ts
+│       └── task.test.ts
 ├── docker-compose.yml
 ├── Dockerfile
 ├── package.json

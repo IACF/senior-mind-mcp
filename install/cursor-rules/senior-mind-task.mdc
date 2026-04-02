@@ -1,0 +1,8 @@
+---
+description: Quando o usuário invocar /task, usar o MCP prompt task do senior-mind
+globs: **/*
+alwaysApply: false
+---
+
+Quando o usuário digitar /task [descrição], invoque o MCP prompt "task" do servidor
+senior-mind com input=[descrição] e siga as instruções retornadas.
